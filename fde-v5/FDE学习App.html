@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FDE 学习台 · 本地版</title>
+<style>
+:root{
+  --bg:#0a0d12;--bg2:#11161f;--panel:#151b26;--line:#232c3b;
+  --ink:#e8edf5;--muted:#8b97a8;--dim:#5c6779;
+  --amber:#f0b429;--cyan:#38bdf8;--green:#34d399;--red:#f87171;--violet:#a78bfa;
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--ink);font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;line-height:1.7;font-size:15px;-webkit-font-smoothing:antialiased}
+button{font-family:inherit}
+a{color:var(--cyan);text-decoration:none}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+
+header{position:sticky;top:0;z-index:50;background:rgba(10,13,18,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);overflow:hidden}
+.hrow{display:flex;align-items:center;gap:14px;padding:11px 0;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;cursor:pointer}
+.logo{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--amber),#d97706);display:grid;place-items:center;font-size:14px;color:#0a0d12;font-weight:900}
+.brand small{display:block;font-size:10px;color:var(--muted);font-weight:400;letter-spacing:1.4px;margin-top:-4px}
+nav{display:flex;gap:3px;margin-left:auto;flex-wrap:nowrap;overflow-x:auto;max-width:100%;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  .hrow{min-width:0}
+  body{overflow-x:hidden}
+.tab{background:transparent;border:1px solid transparent;color:var(--muted);padding:6px 11px;border-radius:9px;cursor:pointer;font-size:13px;transition:.15s}
+.tab:hover{color:var(--ink);background:var(--panel)}
+.tab.on{color:#0a0d12;background:var(--amber);font-weight:700}
+
+main{padding:24px 0 50px}
+section{display:none;animation:fade .2s ease}
+section.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:20px;margin-bottom:14px}
+h2{font-size:19px;margin-bottom:12px}
+h3{font-size:15.5px;margin-bottom:10px}
+h4{font-size:13.5px;margin-bottom:8px;color:var(--cyan)}
+.muted{color:var(--muted)}.dim{color:var(--dim)}.small{font-size:12.5px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.chip{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;border:1px solid var(--line);color:var(--muted);margin:2px 5px 2px 0}
+.chip.a{border-color:#5b4a1a;color:var(--amber);background:#1e1a10}
+.chip.c{border-color:#164e63;color:var(--cyan);background:#0d2430}
+.chip.g{border-color:#14532d;color:var(--green);background:#0d2419}
+.chip.r{border-color:#7f1d1d;color:var(--red);background:#2a1213}
+
+.bar{height:8px;background:#0b0f16;border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--amber),#fbbf24);transition:width .4s}
+.bar.c>i{background:linear-gradient(90deg,var(--cyan),#67e8f9)}
+.bar.g>i{background:linear-gradient(90deg,var(--green),#6ee7b7)}
+
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+@media(max-width:820px){.g2,.g3,.g4{grid-template-columns:1fr}.g4{grid-template-columns:1fr 1fr}.card{padding:16px}.wrap{padding:0 14px}}
+
+.stat{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px}
+.stat b{display:block;font-size:24px;font-family:ui-monospace,monospace;color:var(--amber);line-height:1.2}
+.stat span{font-size:11.5px;color:var(--muted)}
+.stat .sub{font-size:11px;color:var(--dim);margin-top:4px}
+
+.btn{background:var(--bg2);border:1px solid var(--line);color:var(--ink);padding:8px 16px;border-radius:9px;font-size:13.5px;cursor:pointer;transition:.15s}
+.btn:hover{border-color:var(--amber);color:var(--amber)}
+.btn.primary{background:var(--amber);border-color:var(--amber);color:#0a0d12;font-weight:700}
+.btn.primary:hover{background:#fbbf24;color:#0a0d12}
+.btn.sm{padding:5px 11px;font-size:12px}
+.btn.ghost{background:transparent}
+
+/* 周卡片 */
+.week{background:var(--bg2);border:1px solid var(--line);border-radius:13px;padding:16px;margin-bottom:10px;cursor:pointer;transition:.15s}
+.week:hover{border-color:#3a4757}
+.week.done{border-color:#14532d;background:#0d1a14}
+.week.cur{border-color:var(--amber);box-shadow:0 0 0 1px rgba(240,180,41,.25)}
+.week .wh{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.week .wn{font-family:ui-monospace,monospace;font-size:11.5px;color:var(--amber);letter-spacing:1px}
+.week .wt{font-size:16px;font-weight:700}
+.week .wmeta{font-size:11.5px;color:var(--dim);margin-left:auto;font-family:ui-monospace,monospace}
+.week .wg{font-size:12.5px;color:var(--muted);margin-bottom:9px}
+.week .wfoot{display:flex;align-items:center;gap:10px}
+.week .wfoot .bar{flex:1}
+
+/* 天 */
+.day{background:var(--bg2);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+.day .dh{display:flex;align-items:center;gap:10px;padding:13px 15px;cursor:pointer}
+.day .dh:hover{background:#171e29}
+.day .dn{font-family:ui-monospace,monospace;font-size:11px;color:var(--amber);letter-spacing:.5px;min-width:34px}
+.day .dt{font-size:14.5px;font-weight:600;flex:1}
+.day .dck{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);display:grid;place-items:center;font-size:11px;color:transparent;flex:none}
+.day.done .dck{background:var(--green);border-color:var(--green);color:#04120b}
+.day .body{display:none;padding:0 15px 16px;border-top:1px solid var(--line)}
+.day.open .body{display:block}
+.day .body>div{margin-top:14px}
+.learn{background:#0d1a24;border-left:2px solid var(--cyan);padding:11px 13px;border-radius:0 8px 8px 0;font-size:13.5px;color:#c9dbe8}
+.concepts{display:grid;gap:7px}
+.con{font-size:13px;color:var(--muted);padding-left:12px;border-left:1px solid var(--line)}
+.con b{color:var(--ink)}
+.tasks{list-style:none;display:grid;gap:6px}
+.tasks li{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+.tasks li::before{content:"☐";color:var(--amber);flex:none}
+.codebox{position:relative;background:#080b10;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.codebox pre{padding:13px 14px;overflow-x:auto;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.65;color:#c8d4e2;white-space:pre}
+.codebox .cp{position:absolute;top:7px;right:7px;background:#1b2432;border:1px solid var(--line);color:var(--muted);font-size:11px;padding:3px 9px;border-radius:6px;cursor:pointer}
+.codebox .cp:hover{color:var(--amber);border-color:var(--amber)}
+.check{list-style:none;display:grid;gap:5px}
+.check li{font-size:13px;color:var(--muted);display:flex;gap:8px}
+.check li::before{content:"✓";color:var(--green);flex:none}
+
+/* 知识库 */
+.concept{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.concept b{display:block;font-size:13.5px;color:var(--amber);margin-bottom:4px}
+.concept p{font-size:12.5px;color:var(--muted)}
+.searchbox{width:100%;background:var(--bg2);border:1px solid var(--line);color:var(--ink);padding:11px 14px;border-radius:10px;font-size:14px;font-family:inherit;outline:none}
+.searchbox:focus{border-color:var(--amber)}
+
+/* 测验 */
+.q{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:15px;margin-bottom:10px}
+.q .qt{font-size:14px;font-weight:600;margin-bottom:10px}
+.opt{display:block;width:100%;text-align:left;background:#0b0f16;border:1px solid var(--line);color:var(--muted);padding:9px 12px;border-radius:8px;font-size:13px;margin-bottom:6px;cursor:pointer;transition:.12s}
+.opt:hover{border-color:#3a4757;color:var(--ink)}
+.opt.right{border-color:var(--green);background:#0d1a14;color:var(--green)}
+.opt.wrong{border-color:var(--red);background:#1a0d0d;color:var(--red)}
+.why{font-size:12.5px;color:var(--cyan);margin-top:8px;display:none}
+.why.show{display:block}
+
+footer{border-top:1px solid var(--line);padding:18px 0 30px;display:flex;gap:12px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--dim)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--green);color:#04120b;padding:9px 18px;border-radius:99px;font-size:13px;font-weight:700;opacity:0;pointer-events:none;transition:.25s;z-index:99}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{text-align:center;color:var(--dim);padding:26px;font-size:13px}
+
+/* ---------- FDE 是什么 ---------- */
+.lead{font-size:16px;color:var(--ink);margin-bottom:10px}
+.lead2{font-size:14px;color:var(--muted);margin:14px 0 8px}
+.callout{background:#0d1a24;border-left:3px solid var(--amber);padding:14px 16px;border-radius:0 10px 10px 0;font-size:14px;color:#d6e2ee;margin:14px 0;line-height:1.8}
+.callout b{color:var(--amber)}
+.note{background:#0b0f16;border:1px dashed #2a3547;padding:12px 14px;border-radius:10px;font-size:13px;color:var(--muted);margin:14px 0;line-height:1.75}
+.note b{color:var(--ink)}
+.note.warn{border-color:#5b3a1a;background:#1a1207}
+.note.warn b{color:#fbbf24}
+.datagrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:16px 0}
+.dstat{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:13px;text-align:center}
+.dstat b{display:block;font-size:22px;font-family:ui-monospace,monospace;color:var(--amber);line-height:1.2}
+.dstat span{font-size:11px;color:var(--muted);line-height:1.5;display:block;margin-top:5px}
+.taglist{display:inline-block;background:var(--bg2);border:1px solid var(--line);color:var(--muted);font-size:12px;padding:3px 10px;border-radius:99px;margin:3px 5px 3px 0}
+.stack{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.layer{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;position:relative;overflow:hidden;padding-left:18px}
+.layer::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px}
+.layer.hi::before{background:var(--green)}
+.layer.mid::before{background:var(--cyan)}
+.layer.low::before{background:var(--red)}
+.layer .lt{font-size:10.5px;letter-spacing:1.4px;color:var(--dim);text-transform:uppercase}
+.layer .ln{font-size:14.5px;font-weight:700;margin:3px 0 5px;color:var(--ink)}
+.layer p{font-size:12.5px;color:var(--muted);line-height:1.65}
+.layer .lv{position:absolute;right:16px;top:14px;font-family:ui-monospace,monospace;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;border:1px solid currentColor}
+.layer.hi .lv{color:var(--green)}
+.layer.mid .lv{color:var(--cyan)}
+.layer.low .lv{color:var(--red)}
+.myth{display:grid;gap:10px;margin-top:12px}
+.mline{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:13px 15px;font-size:13px;color:var(--muted);line-height:1.75}
+.mline b{color:var(--red);display:block;margin-bottom:5px;font-size:13.5px}
+.intronav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.intronav button{background:var(--bg2);border:1px solid var(--line);color:var(--muted);font-size:12px;padding:5px 11px;border-radius:99px;cursor:pointer;transition:.15s}
+.intronav button:hover{border-color:var(--amber);color:var(--amber)}
+.introsec{margin-bottom:26px;scroll-margin-top:80px}
+.introsec h3{font-size:17px;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.introsec h4{font-size:13.5px;color:var(--cyan);margin:18px 0 8px}
+.introsec p{font-size:13.5px;color:var(--muted);margin-bottom:10px;line-height:1.8}
+.introsec ul{margin:0 0 12px 20px;font-size:13px;color:var(--muted);line-height:1.9}
+.introsec table{width:100%;border-collapse:collapse;font-size:12.5px;margin:12px 0}
+.introsec th{text-align:left;color:var(--dim);font-size:11px;letter-spacing:.5px;padding:7px 9px;border-bottom:1px solid var(--line);font-weight:600}
+.introsec td{padding:8px 9px;border-bottom:1px solid #1a2230;color:var(--muted);line-height:1.65;vertical-align:top}
+.introsec td b{color:var(--ink)}
+.introsec tr:hover td{background:#121926}
+@media(max-width:820px){.datagrid{grid-template-columns:1fr 1fr}}
+
+
+/* ---------- 日程表 ---------- */
+.planbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px}
+.planbar label{font-size:12.5px;color:var(--muted)}
+.planbar input[type=date]{background:#0b0f16;border:1px solid var(--line);color:var(--ink);border-radius:8px;padding:6px 10px;font-family:inherit;font-size:13px}
+.cal{display:grid;grid-template-columns:54px repeat(7,1fr);gap:6px}
+.cal .hcell{font-size:10px;letter-spacing:1px;color:var(--dim);text-align:center;padding:4px 0}
+.cal .wlab{display:flex;flex-direction:column;justify-content:center;font-size:11px;color:var(--amber);font-family:ui-monospace,monospace;letter-spacing:.5px}
+.cal .wlab small{color:var(--dim);font-size:9px;letter-spacing:0}
+.cell{background:var(--bg2);border:1px solid var(--line);border-radius:9px;padding:7px 8px;min-height:64px;cursor:pointer;transition:.12s;display:flex;flex-direction:column;gap:2px}
+.cell:hover{border-color:#3a4757;transform:translateY(-1px)}
+.cell .dt{font-size:9.5px;color:var(--dim);font-family:ui-monospace,monospace}
+.cell .tt{font-size:11px;color:var(--muted);line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cell .dn{font-size:9px;color:var(--dim);margin-top:auto}
+.cell.done{background:#0d1a14;border-color:#14532d}
+.cell.done .tt{color:var(--dim);text-decoration:line-through}
+.cell.today{border-color:var(--amber);box-shadow:0 0 0 1px rgba(240,180,41,.35)}
+.cell.today .dt{color:var(--amber)}
+.cell.missed{border-color:#5b3a1a;background:#1a1207}
+.cell.missed .dt{color:#fbbf24}
+.cell.empty{opacity:.35}
+.todaybox{background:linear-gradient(135deg,#1a1408,#12161f);border:1px solid var(--amber);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.todaybox .td{font-size:11px;letter-spacing:1.2px;color:var(--amber)}
+.todaybox h3{font-size:17px;margin:6px 0 8px}
+.sop{display:grid;gap:10px;margin-top:12px}
+.soprow{display:flex;gap:12px;align-items:flex-start;background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+.soprow .tm{font-family:ui-monospace,monospace;font-size:11px;color:var(--amber);min-width:74px;letter-spacing:.5px}
+.soprow .ct{font-size:12.5px;color:var(--muted);line-height:1.7}
+.soprow .ct b{color:var(--ink)}
+.ms{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.msitem{background:var(--bg2);border:1px solid var(--line);border-radius:11px;padding:12px 14px}
+.msitem .mk{font-size:10.5px;letter-spacing:1px;color:var(--cyan)}
+.msitem .mv{font-size:13px;font-weight:600;margin:4px 0 4px;color:var(--ink)}
+.msitem .md{font-size:11.5px;color:var(--muted)}
+@media(max-width:820px){.cal{grid-template-columns:38px repeat(7,1fr);gap:4px}.cell{padding:5px 4px;min-height:54px}.cell .tt{font-size:9.5px}.ms{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hrow">
+    <div class="brand" onclick="show('home')">
+      <div class="logo">F</div>
+      <div>FDE 学习台<small>LOCAL · OFFLINE</small></div>
+    </div>
+    <nav id="nav">
+      <button class="tab on" data-t="home">首页</button>
+      <button class="tab" data-t="plan">日程表</button>
+      <button class="tab" data-t="intro">FDE 是什么</button>
+      <button class="tab" data-t="course">12 周课程</button>
+      <button class="tab" data-t="concepts">扫盲知识库</button>
+      <button class="tab" data-t="quiz">测验</button>
+      <button class="tab" data-t="ref">速查卡</button>
+      <button class="tab" data-t="progress">我的进度</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- 首页 -->
+  <section id="home" class="on"></section>
+
+  <!-- 日程表 -->
+  <section id="plan"></section>
+
+  <!-- FDE 是什么 -->
+  <section id="intro"></section>
+
+  <!-- 课程 -->
+  <section id="course"></section>
+
+  <!-- 扫盲 -->
+  <section id="concepts">
+    <h2>扫盲知识库 · <span class="small muted"><span id="conceptCount"></span> 个概念，先看懂再说</span></h2>
+    <input class="searchbox" id="search" placeholder="搜一个词，比如「函数」「API」「评测」……" />
+    <div class="grid g2" id="conceptList" style="margin-top:14px"></div>
+  </section>
+
+  <!-- 测验 -->
+  <section id="quiz"></section>
+
+  <!-- 速查卡 -->
+  <section id="ref"></section>
+
+  <!-- 进度 -->
+  <section id="progress"></section>
+
+</main>
+
+<footer class="wrap">
+  <span>FDE 学习台 · 本地版</span>
+  <span class="dim">进度存在这台电脑的浏览器里，不上传 · 请用「打开学习台.command」启动，直接双击 HTML 会丢进度</span>
+  <button class="btn sm" id="export">导出进度</button>
+  <button class="btn sm" id="import">导入进度</button>
+  <button class="btn sm" id="reset">重置</button>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const DATA = {"weeks": [{"n": 0, "title": "FDE方法论周：先搞懂这份工作，再动手（7天）", "goal": "能脱稿讲清 FDE 是什么、跟产品经理像在哪、不像在哪；能写出一页分发物料的问题定义；能读懂一段代码的框架并判好坏；能对照字节FDE岗位要求，列出自己的缺口和补法。不写代码。", "deliverable": "一页FDE认知卡 + 一页分发物料问题定义 + 前3个技能缺口 + 一张代码验收清单 + 字节FDE自查表", "days": [{"d": 1, "title": "FDE像产品经理吗：对在哪、断在哪", "learn": "作为方法，FDE就是AI时代的产品经理：找痛点、翻译成技术语言、交给技术人员落地、推动上线、对结果负责。作为岗位，它有五处不一样：正式招的FDE要自己写生产代码、一个客户扎到底、负责到上线之后、定范围是技术判断、还要把现场经验反哺回产品。对你来说，解法是把写代码交给Claude、Codex或一个工程师，你握住问题定义、规格、评测、落地这四件。", "concepts": [["FDE方法", "发现→定义→重写工作流→规格→评测→落地→交接。代码只是其中一小段。"], ["产品经理类比", "找痛点、翻译、推动上线、对结果负责，这四步和FDE的前半段是一样的。"], ["AI当手", "Claude、Codex替你写代码；你负责看懂、验收、找错、决定上不上线。"]], "tasks": ["读方法论页「类比对不对」和「九步全程」两节，20分钟", "用自己的话写一页认知卡：一句话定义 + 和产品经理的3点区别 + 一句「我为什么适合做FDE」（要提到12年后期和分发物料）", "对着手机录音讲3分钟，回听：有没有「大概」「可能」「差不多」？有就重写那句"], "code": "", "check": ["能脱稿讲清FDE是什么，不用背定义", "能说清和产品经理像在哪、不像在哪", "认知卡里有一句自己的定位，不抄JD"]}, {"d": 2, "title": "发现：问出客户自己都没想清楚的疼", "learn": "客户原话只有一句：「下周五上线流媒体，预告、海报、字幕、成片要同时发给影院、流媒体、短视频、海外四家，别再发错版本了。」别急着给工具，先问：上次发错是哪一次、错在哪、谁发现的、错一次赔多少钱、现在是谁在发、发一次要多久、四家到底各要什么格式。问不到数字和真例子，就说明还没问够。", "concepts": [["发现", "跟班看真实工作，拿到原话和数字，而不是听客户说「想要个AI」。"], ["基线", "现在要多久、花多少钱、错几次。没有基线，就没法证明你帮上了忙。"], ["真例子", "「不准」「太慢」不是需求，要3条真例子才算问到了。"]], "tasks": ["针对分发物料场景，写出你的3个发现问题（问客户、问业务、问IT，各1个）", "把3个问题发给Goku，让它演客户、宣发、IT回答你", "把回答记下来：哪些是你问之前就知道的，哪些是问出来才知道的"], "code": "", "check": ["3个问题都不是「你们想要什么功能」", "每个问题都指向一个数字或一个真例子", "能说出客户现在是怎么发物料的"]}, {"d": 3, "title": "一页问题定义 + 重写工作流", "learn": "把发现翻成一页纸：谁、在什么情况下、要发什么、现在要多久、错一次代价是什么、做到什么程度算好、什么不做。然后重画工作流：原来5到8步里，哪步归AI、哪步必须留给人、哪步要人先审再过。只加一个聊天机器人、不改流程，是最常见的失败方式。", "concepts": [["一页问题定义", "用户、场景、现在的做法、目标数字、不做什么，写在一页纸上，客户点头才算过。"], ["工作流重写", "不是在旧流程上加AI，是把流程拆开重排，标出AI、人、人审的分工。"], ["说不", "客户要的东西不值得做，要敢砍掉。这是FDE最难的一课。"]], "tasks": ["填一页分发物料问题定义：客户是谁、现在怎么发、错一次多少钱、目标数字加日期、不做什么", "画改前改后两张工作流图，标出AI / 人 / 人审", "写下你砍掉的1件事 + 为什么不做"], "code": "", "check": ["能用客户自己的话把疼复述一遍，客户点头说「对，就是这个」", "目标是一个数字加一个日期，不是「更快更好」", "能说出哪一步一错就出大事"]}, {"d": 4, "title": "规格七项：写给工程师和Claude都能开工的文档", "learn": "规格不是一段愿望，是七项：身份和目标、输入输出、能用的工具、数据和来源、护栏、完成标准、限制。写给Claude或工程师都一样：输入给3个真例子，输出定好格式和引用要求，工具写清名字和「绝不能做的事」，护栏写成能测的规则。", "concepts": [["规格", "身份、输入输出、工具、数据、护栏、完成标准、限制，七项缺一不可。"], ["护栏", "「绝不能自动发出去」「超过多少钱要人批」这种规则，要写成能测的。"], ["指挥AI", "把规格和评测集一起给Claude，让它做最小的一片；你负责验收，不负责敲代码。"]], "tasks": ["给分发物料场景写一份规格七项（先写身份、输入输出、工具三项）", "把规格交给Claude，让它做最小的一片：先只做「检查四家格式对不对」", "让Claude用 plain language 解释它加的每一个权限和数据流，列出它验证不了的东西"], "code": "", "check": ["规格里有3个真例子，不是空话", "能说出AI绝不能自己做的2件事", "能列出Claude验证不了的东西（你的风险清单）"]}, {"d": 5, "title": "评测20例 + 摩根士丹利是怎么落地的", "learn": "评测不是演示那天运气好，是20个真实案例：10个常规、5个难的、5个绝不能错的，先定通过线，再跑，再改，再全量重跑。摩根士丹利的例子：技术只花6到8周，取得顾问信任的试点又花了4个月，最后98%的顾问团队在用，研究报告使用量涨了3倍。信任比搭建花的时间长，这才是落地。", "concepts": [["评测集", "20个真实案例，先定通过线，再跑。改一次就全量重跑。"], ["采用率", "有多少人在用，每周用几次。没人用就等于没做。"], ["商业价值", "省了多少钱、多赚了多少钱、错一次赔多少钱。只讲技术多先进，等于没讲。"]], "tasks": ["列20个分发物料评测案例：10个常规、5个难的、5个绝不能错的，先列出来", "读摩根士丹利案例一遍，写下3句话：它痛在哪、怎么评的、花了多久才让人信", "写下你的前3个技能缺口，各写一句：在第几周补、补完怎么验证"], "code": "", "check": ["20个案例列出来了，5个绝不能错的有名字", "能讲清摩根士丹利为什么花4个月做信任", "前3个缺口有明确的补法和验证法"]}, {"d": 6, "title": "读代码判代码：不用会写，但要会判（面包类比）", "learn": "这叫技术判断力，也叫架构理解力、代码评审与验收能力，不是编程能力。你不用知道每行代码是什么意思，就像做面包不用知道每一步加了多少克糖和面粉。但你要知道三件事：第一，面包是怎么做出来的（第一步做什么、第二步做什么、第三步做什么）；第二，大概能看出来水加多了还是少了、糖加多了还是少了、温度是高了还是低了；第三，出炉之后哪些能吃、哪些不能吃。对应到代码：第一，框架是什么、数据从哪来、经过哪几步、到哪去；第二，功能做多了还是做少了、边界处理了没有、跑得快不快、花钱多不多；第三，交付之后哪些能用、哪些不能用。判断分三层：对不对（评测过没有）、全不全（边界和异常处理了没有）、稳不稳（权限、成本、失败了怎么办）。", "concepts": [["技术判断力", "不用会写代码，但要会读框架、读数据流、判好坏、做验收。这是FDE最核心的能力之一。"], ["框架", "代码的骨架：分几层、每层干什么、谁调谁。先看骨架，再看细节。"], ["数据流", "数据从哪来、经过哪几步、到哪去。画出来，错的地方就藏在这条线上。"], ["副作用", "代码除了返回结果，还改了什么：写了文件、发了请求、删了数据。副作用是最容易出事的地方。"]], "tasks": ["让Claude给你讲一遍它刚写的代码：入口在哪、数据怎么流、有哪3个副作用，用 plain language，不要贴代码", "按面包类比填一张表：水（数据）多了还是少了、糖（功能）多了还是少了、温度（性能/成本）高了还是低了", "写一张验收清单：交付之后，哪些能用、哪些不能用、哪些要人先审，分三栏", "故意问Claude一个它答不上来的问题：「这段代码在什么情况下会坏？」看它能不能说出边界"], "code": "", "check": ["能说出一段代码的框架：入口、数据流、输出，不用背代码", "能指出至少1处「水多了/少了」：边界、异常、功能多做或少做", "能写出验收清单，分清能用、不能用、要人审"]}, {"d": 7, "title": "字节FDE对照：你离正式岗位还缺什么", "learn": "先说诚实话：字节2026年11月11日那36个FDE岗，要的是六组能力。一，你已经有的：发现、翻译、工作流重写、技术判断力，还有12年影视后期——DIT那条链（烤卡、转码、场镜次、声画合板、回批）和分发物料那条链，你都亲手走过，这是别人没有的行业证据。二，字节还要求的：生产级代码（Python或Java、FastAPI或Spring、API开发、基础前端）、Vibe coding（字节明写的要求，但门槛是看出AI写得对不对）、Agent架构（Workflow、ReAct、MultiAgent、上下文管理、记忆管理、Skills和Tools集成、RAG链路）、评测与可观测性（黄金集、轨迹评测、准确率、安全、延迟三道门、日志和指标）、数据工程（SQL、ETL、数据治理、AI-ready数据、语义层）、部署与安全（私有化部署、沙箱、密钥进环境变量、云原生K8s和Serverless）。三，别骗自己：正式岗位还要3到5年软件研发或交付经验、本科计算机相关专业优先，这两条不是一个月能补的。你的解法不变：Vibe coding当手、技术判断力验收、用交付物证明，缺的工程证据一块一块补。主场景仍然是分发物料模拟，DIT那条链是第二练习场景。", "concepts": [["字节FDE对照", "字节36个FDE岗要的六组能力：生产代码、Agent架构、评测可观测、数据工程、部署安全、端到端负责。对照它填自查表。"], ["Vibe coding", "用AI写代码是字节明写的要求，但门槛是能看出AI写得对不对"], ["生产级代码", "不只是能跑：异常、测试、日志、配置、部署、回滚，缺一不可"], ["AI-ready数据", "数据要让Agent能消费：语义清晰的元数据、上下文友好的结构、适配RAG的知识组织"], ["轨迹评测", "不只看最后答案对不对，还要看它调对了工具没有、按对了顺序没有、该停的时候停了没有。"]], "tasks": ["填一张字节FDE自查表（见教程/字节FDE对照_自查表.md）：六组能力，每组写四格——现在什么水平、证据是什么、缺什么、第几周补", "每组写一句「补完怎么证明」：必须是一个交付物加一个数字，不是「学过」", "只选一个最先补的缺口，写下本周就能动手的第一步（30分钟能做完的那种）", "可选：把DIT那条链（烤卡→转码→场镜次→声画合板→回批）也画成一页问题定义，作为第二练习场景"], "code": "", "check": ["自查表六组都填了，每组都有证据和缺口", "只选了1个最先补的缺口，不贪多", "每个缺口都有「交付物+数字」的证明方式，不是「学过」"]}]}, {"n": 1, "title": "电脑和程序是什么", "goal": "搞懂「程序就是一堆按顺序执行的指令」，并且能写出、运行你的第一个文件。", "deliverable": "一个能读文件、数行数、打印结果的小程序（20–30 行）", "days": [{"d": 1, "title": "扫盲：电脑到底在干什么", "learn": "电脑只会做三件事：把数据搬来搬去、做简单计算、根据条件决定下一步。所谓「程序」，就是人写给它的一串指令。你写的代码，最后会变成这些指令。", "concepts": [["程序", "一串按顺序执行的指令。电脑不会猜你的意思，它只照着做。"], ["源代码", "你写的 .py 文件。人看得懂，电脑不能直接跑。"], ["解释器", "Python 解释器负责把你的 .py 一行一行翻译成电脑能执行的动作。"], ["终端", "你给电脑下命令的窗口。不是黑魔法，就是一个输入框。"]], "tasks": ["打开终端（启动台搜「终端」）", "输入 pwd 回车，看它输出什么（这是你当前所在目录）", "输入 ls 回车，看你目录里有什么", "输入 python3 -V 回车，看版本号", "输入 python3 -c \"print(1+1)\" 回车，看它算出来"], "code": "", "check": ["能说出「程序」是什么（一句话）", "知道 pwd / ls / python3 -V 各自干什么", "看到 python3 -c \"print(1+1)\" 输出 2"]}, {"d": 2, "title": "装好你的工作台", "learn": "今天不学编程，只把工具装好。装完之后你能：新建文件、写代码、运行、看懂报错。", "concepts": [["VS Code", "代码编辑器。比记事本强的地方：高亮、补全、能看目录。"], ["文件扩展名", ".py 结尾的文件才是 Python 程序。写成 .txt 就跑不了。"], ["当前目录", "终端里你「站」的位置。运行 python3 x.py 时，它是在当前目录找 x.py。"]], "tasks": ["装 VS Code：https://code.visualstudio.com/ （下载后拖进「应用程序」）", "VS Code 里按 Cmd+Shift+P，输入 shell command，选 Install 'code' command in PATH", "终端执行：mkdir -p ~/fde-code/week1 && cd ~/fde-code/week1", "终端执行：code . （应该打开 VS Code）", "新建 hello.py，写 print(\"hello\") ，保存", "终端执行：python3 hello.py"], "code": "print(\"hello\")\nprint(\"我今天开始学 FDE\")", "check": ["VS Code 能打开 ~/fde-code/week1", "python3 hello.py 能输出两行字", "知道 .py 文件必须放在当前目录才能被找到"]}, {"d": 3, "title": "学会看报错（今天最重要）", "learn": "报错不是失败，是 Python 在告诉你哪里不对。学会读报错，比学会写代码更早要用。", "concepts": [["SyntaxError", "语法错。最常见：括号、引号、冒号没配对。"], ["Traceback", "调用栈。告诉你错误发生在哪个文件、哪一行、哪一层。"], ["行号", "报错里 File \"...\", line N 的 N。永远先看这个。"]], "tasks": ["把 hello.py 改成 print(\"hello\" （故意少一个右括号），保存", "运行 python3 hello.py，观察报错", "找出报错里的三样东西：文件、行号、错误类型", "修好它，再运行一次", "再故意制造一个错：把 print 拼成 pritn，看报什么错"], "code": "print(\"hello\"  # ← 故意少一个右括号，运行看报错", "check": ["能指出报错里的文件、行号、错误类型", "能修好「括号没闭合」", "知道 NameError 和 SyntaxError 的区别"]}, {"d": 4, "title": "变量与类型：数据有形状", "learn": "程序处理的是数据，数据有类型。字符串是文字，整数是数字，小数是带小数点的数字。类型不对，运算就会出错。", "concepts": [["变量", "给一个值起个名字。a = 1 意思是「把 1 叫做 a」。"], ["字符串 str", "文字。必须用引号包起来。\"你好\" 或 '你好' 都行。"], ["整数 int / 小数 float", "数字。1 是 int，1.5 是 float。"], ["类型转换", "str(123) 把数字变文字，int(\"123\") 把文字变数字。不转就会报 TypeError。"]], "tasks": ["新建 types.py", "写：name = \"你的名字\" / age = 30 / height = 1.75", "分别 print 它们，再 print(type(name)) 看类型", "试着 print(\"我今年\" + age)，看报错（字符串 + 数字）", "改成 print(\"我今年\" + str(age))，看能不能跑"], "code": "name = \"你的名字\"\nage = 30\nheight = 1.75\n\nprint(name)\nprint(type(name))\nprint(type(age))\nprint(\"我今年 \" + str(age) + \" 岁\")", "check": ["能说出 str / int / float 的区别", "知道为什么字符串不能直接加数字", "会用 str() 和 int() 转换"]}, {"d": 5, "title": "条件：让程序做判断", "learn": "程序会「看情况」。如果……就……否则……。这是所有业务规则的起点。", "concepts": [["if / elif / else", "如果 / 否则如果 / 否则。按顺序判断，命中一个就跳出。"], ["比较运算符", "> < >= <= == != 。注意「等于」是两个等号。"], ["缩进", "Python 用缩进表示「属于这个 if」。缩进错了逻辑就错。"]], "tasks": ["新建 judge.py", "写一个程序：给一个分数，输出「及格」或「不及格」", "加一档：90 分以上输出「优秀」", "故意把缩进改乱，看报错 IndentationError", "再写一个：判断一个字幕时长是否小于 0.8 秒"], "code": "score = 85\n\nif score >= 90:\n    print(\"优秀\")\nelif score >= 60:\n    print(\"及格\")\nelse:\n    print(\"不及格\")", "check": ["能写出 if / elif / else 三段判断", "知道 == 和 = 的区别", "知道缩进错了会报 IndentationError"]}, {"d": 6, "title": "循环：对一堆东西做同一件事", "learn": "真实任务永远是「一堆」，不是一个。循环就是「对每一个都做一遍」。", "concepts": [["for 循环", "for x in 一堆东西: 把每个元素轮流给 x，然后执行下面的代码。"], ["range", "range(5) 生成 0,1,2,3,4。注意从 0 开始。"], ["累加", "count = count + 1 或 count += 1。先算右边，再赋给左边。"]], "tasks": ["新建 loop.py", "用 for 打印 1 到 5", "用 for 累加 1 到 100，输出结果（应该是 5050）", "给一个列表 [3, 1, 4, 1, 5]，用循环找出最大值"], "code": "total = 0\nfor i in range(1, 101):\n    total += i\nprint(\"1 到 100 的和：\", total)\n\nnums = [3, 1, 4, 1, 5]\nbiggest = nums[0]\nfor n in nums:\n    if n > biggest:\n        biggest = n\nprint(\"最大值：\", biggest)", "check": ["能写出 for 循环累加", "能手动找出列表最大值", "知道 range(1, 101) 是 1 到 100（不含 101）"]}, {"d": 7, "title": "周项目：读文件、统计、输出", "learn": "把这一周学的全用上：读一个文本文件，数行数、空行数、最长行。这就是「输入 → 处理 → 输出」的完整形状。", "concepts": [["open()", "打开文件。必须写 encoding=\"utf-8\"，否则中文会乱码。"], ["readlines()", "把文件按行读成一个列表，每行是一个元素。"], ["strip()", "去掉字符串首尾的空白和换行符。判断空行必须用 line.strip() == \"\"。"], ["with", "with open(...) as f: 会自动关闭文件，比手动 close() 安全。"]], "tasks": ["在 week1 目录造一个 sample.txt（5 行，其中一行是空行）", "写 count.py：读文件，输出总行数", "升级：输出空行数（提示：line.strip() == \"\"）", "再升级：输出最长行的字数", "不用看 AI 的答案，自己复述一遍核心逻辑（限时 60 分钟）"], "code": "def read_file(path):\n    with open(path, \"r\", encoding=\"utf-8\") as f:\n        return f.readlines()\n\n\ndef analyze(lines):\n    total = len(lines)\n    empty = 0\n    max_len = 0\n    for line in lines:\n        if line.strip() == \"\":\n            empty += 1\n        if len(line.strip()) > max_len:\n            max_len = len(line.strip())\n    return {\"total\": total, \"empty\": empty, \"max_len\": max_len}\n\n\nif __name__ == \"__main__\":\n    lines = read_file(\"sample.txt\")\n    result = analyze(lines)\n    print(\"总行数：\", result[\"total\"])\n    print(\"空行数：\", result[\"empty\"])\n    print(\"最长行字数：\", result[\"max_len\"])", "check": ["count.py 能输出总行数、空行数、最长行字数", "能说清 strip() 为什么不能省", "能不用看答案，复述出核心逻辑并指出 AI 可能写错的地方"]}]}, {"n": 2, "title": "数据怎么流", "goal": "搞懂列表、字典、函数、参数，能写 40–60 行的小工具，并且第一次读别人的代码。", "deliverable": "一个支持命令行参数、能批量处理文件夹、有测试的小工具", "days": [{"d": 8, "title": "列表：一排东西", "learn": "列表是最常用的容器。字幕条目、文件列表、价格表，全都是列表。", "concepts": [["列表 list", "items = [1, 2, 3]。有顺序，可以改。"], ["索引", "items[0] 是第一个（从 0 开始），items[-1] 是最后一个。"], ["append / len", "items.append(4) 加一个，len(items) 看有几个。"], ["切片", "items[0:2] 取前两个。左闭右开。"]], "tasks": ["新建 list_demo.py", "造一个列表，打印第一个、最后一个、长度", "用 append 加一个，再用 len 看变化", "用 for 循环打印每个元素", "用 sorted() 排序后打印"], "code": "items = [\"第一条\", \"第二条\", \"第三条\"]\n\nprint(items[0])\nprint(items[-1])\nprint(len(items))\n\nitems.append(\"第四条\")\nprint(len(items))\n\nfor it in items:\n    print(it)", "check": ["知道索引从 0 开始", "知道 [-1] 是最后一个", "会用 append 和 len"]}, {"d": 9, "title": "字典：给每个东西记一个值", "learn": "列表是「一排」，字典是「一对一」。统计次数、存配置、表示一条记录，全靠字典。", "concepts": [["字典 dict", "d = {\"name\": \"张三\", \"age\": 30}。键值对。"], ["取值", "d[\"name\"] 取不到会报 KeyError；d.get(\"name\", 默认值) 不会报错。"], ["遍历", "for k, v in d.items(): 同时拿到键和值。"], ["为什么用 get", "真实数据经常缺字段。用 [] 会崩，用 get 能兜住。"]], "tasks": ["新建 dict_demo.py", "造一个字典，存一个项目的名字、星数、许可证", "print 每个字段", "故意取一个不存在的键，看 KeyError", "改用 .get() 再试一次"], "code": "repo = {\"name\": \"subtitle-qc\", \"stars\": 120, \"license\": \"MIT\"}\n\nprint(repo[\"name\"])\nprint(repo.get(\"stars\"))\nprint(repo.get(\"owner\", \"未知\"))   # 不存在也不报错\n\nfor k, v in repo.items():\n    print(k, \"=\", v)", "check": ["能创建字典并取值", "能说清 [] 和 get() 的区别", "知道 KeyError 是什么"]}, {"d": 10, "title": "函数：给一段代码起名字", "learn": "函数把「做一件事」打包起来。好处：可以重复用、可以单独测、改的时候只改一处。", "concepts": [["def", "def 函数名(参数): 定义函数。"], ["参数", "函数需要的输入。可以多个，也可以有默认值。"], ["return", "把结果交出去。不写 return，函数返回 None。"], ["print vs return", "print 是给人看，return 是给程序用。混了就会出 bug。"]], "tasks": ["新建 func_demo.py", "写 def add(a, b): return a + b", "调用它，print(add(2, 3))", "写一个函数：判断一个字符串是不是空（返回 True/False）", "故意写一个只 print 不 return 的函数，看调用方拿到什么"], "code": "def add(a, b):\n    return a + b\n\n\ndef is_blank(text):\n    return text.strip() == \"\"\n\n\nprint(add(2, 3))\nprint(is_blank(\"   \"))\nprint(is_blank(\"你好\"))\n\n\ndef bad(a, b):\n    print(a + b)   # 只打印，没有 return\n\n\nresult = bad(1, 2)\nprint(\"返回值是：\", result)   # None", "check": ["能定义并调用函数", "能说清 print 和 return 的区别", "知道不写 return 会返回 None"]}, {"d": 11, "title": "命令行参数：让程序听人话", "learn": "程序不该把文件名写死在代码里。真实工具都是「运行时告诉它处理哪个文件」。", "concepts": [["sys.argv", "一个列表，装着你敲命令时给的所有参数。"], ["argv[0]", "固定是脚本自己的名字。"], ["argv[1]", "第一个参数（你要处理的文件）。"], ["参数检查", "len(sys.argv) < 2 说明用户没给参数，要给提示而不是崩。"]], "tasks": ["新建 args.py，打印 sys.argv 看看它长什么样", "加检查：没给参数时打印用法", "给它一个文件路径参数，读这个文件", "传一个不存在的文件，看 FileNotFoundError"], "code": "import sys\n\n\ndef main():\n    if len(sys.argv) < 2:\n        print(\"用法：python3 args.py <文件路径>\")\n        return\n\n    path = sys.argv[1]\n    print(\"要读的文件：\", path)\n    with open(path, \"r\", encoding=\"utf-8\") as f:\n        lines = f.readlines()\n    print(\"行数：\", len(lines))\n\n\nif __name__ == \"__main__\":\n    main()", "check": ["知道 sys.argv 是什么", "知道 argv[0] 和 argv[1] 的区别", "不带参数时程序有提示、不崩"]}, {"d": 12, "title": "JSON：最常见的结构化数据", "learn": "真实系统的数据几乎都是 JSON。它就是「带键的数据」，Python 里对应 dict 和 list。", "concepts": [["JSON", "{\"name\": \"x\", \"stars\": 10}。和 Python 字典长得几乎一样。"], ["json.load", "从文件读 JSON，变成 Python 对象。"], ["json.dumps", "把 Python 对象变回 JSON 字符串。ensure_ascii=False 让中文正常显示。"], ["null", "JSON 的 null 对应 Python 的 None。"]], "tasks": ["新建 repos.json，写 3 个项目的数组", "写 read_json.py 读它并打印每个项目名", "打印一共有几个项目", "过滤掉没有 license 的项目，只打印有许可证的"], "code": "import json\n\n\ndef load(path):\n    with open(path, \"r\", encoding=\"utf-8\") as f:\n        return json.load(f)\n\n\nrepos = load(\"repos.json\")\nprint(\"一共\", len(repos), \"个项目\")\n\nfor r in repos:\n    if not r.get(\"license\"):\n        continue\n    print(r[\"name\"], \"|\", r[\"stars\"], \"|\", r[\"license\"])", "check": ["能读 JSON 文件", "知道 JSON 的 null 对应 None", "能过滤字段缺失的数据"]}, {"d": 13, "title": "CSV：脏数据的日常", "learn": "CSV 看着简单，坑很多：逗号、引号、空字段、全是字符串。真实交付里 80% 的时间在处理这些。", "concepts": [["csv.DictReader", "自动用第一行当键名，每行变成字典。"], ["所有值都是字符串", "CSV 读出来 \"120\" 是文字，不是数字。要 int() 转换。"], ["newline=\"\"", "打开 CSV 必须加这个参数，否则换行会出问题。"], ["脏数据", "缺字段、格式错、重复行。清洗是必经步骤。"]], "tasks": ["新建 projects.csv，写 4 行，故意留一个空字段", "写 read_csv.py，用 DictReader 读出来", "打印原始行数", "跳过 owner 为空的行，打印跳过了几条", "把 stars 转成数字并排序"], "code": "import csv\n\n\nwith open(\"projects.csv\", \"r\", encoding=\"utf-8\", newline=\"\") as f:\n    reader = csv.DictReader(f)\n    rows = list(reader)\n\nprint(\"原始行数：\", len(rows))\n\nclean = []\nfor r in rows:\n    if not r.get(\"owner\"):\n        continue\n    r[\"stars\"] = int(r[\"stars\"])\n    clean.append(r)\n\nclean.sort(key=lambda r: r[\"stars\"], reverse=True)\nfor r in clean:\n    print(r[\"name\"], r[\"stars\"])", "check": ["能用 DictReader 读 CSV", "知道为什么所有值都是字符串", "能过滤并排序"]}, {"d": 14, "title": "周项目：批量处理 + 第一次读别人的代码", "learn": "把这一周学的串起来：传一个文件夹，处理里面所有 txt，出汇总。然后第一次去读你 SkillRadar 里的一个函数。", "concepts": [["os.listdir", "列出文件夹里的文件名（不含路径）。"], ["os.path.join", "拼完整路径。folder + name 手拼会漏斜杠。"], ["continue", "跳过这一个，继续下一个。用来过滤文件。"], ["sorted", "让处理顺序稳定，测试才可靠。"]], "tasks": ["建 files/ 文件夹，造 3 个 txt", "写 batch.py：传文件夹，处理所有 .txt，输出每个文件的行数", "最后输出文件总数和总行数", "传一个不存在的文件夹，看有没有友好提示", "读 SkillRadar 的 slugify 函数，回答：吃进什么、吐出什么、会不会返回空"], "code": "import os\nimport sys\n\n\ndef analyze_one(path):\n    with open(path, \"r\", encoding=\"utf-8\") as f:\n        lines = f.readlines()\n    total = len(lines)\n    empty = sum(1 for line in lines if line.strip() == \"\")\n    return {\"path\": path, \"total\": total, \"empty\": empty}\n\n\ndef main():\n    if len(sys.argv) < 2:\n        print(\"用法：python3 batch.py <文件夹>\")\n        return\n    folder = sys.argv[1]\n    if not os.path.isdir(folder):\n        print(\"不是文件夹：\", folder)\n        return\n\n    results = []\n    for name in sorted(os.listdir(folder)):\n        if not name.endswith(\".txt\"):\n            continue\n        results.append(analyze_one(os.path.join(folder, name)))\n\n    for r in results:\n        print(r[\"path\"], \"行数\", r[\"total\"], \"空行\", r[\"empty\"])\n    print(\"---\")\n    print(\"文件总数：\", len(results))\n    print(\"总行数：\", sum(r[\"total\"] for r in results))\n\n\nif __name__ == \"__main__\":\n    main()", "check": ["batch.py 能处理文件夹并汇总", "不存在的文件夹有提示", "能回答 SkillRadar 的 slugify 的 5 个问题（哪怕答不全）"]}]}, {"n": 3, "title": "让代码经得起折腾", "goal": "学会错误处理、测试、调试、重构。从「能跑」变成「改得动、坏不了」。", "deliverable": "有 5 个以上测试、能处理异常输入的工具", "days": [{"d": 15, "title": "错误处理：出错要接住", "learn": "真实世界的数据是脏的。程序不能一遇到坏文件就崩，要给人话提示。", "concepts": [["try / except", "把可能出错的放 try，出错跳到 except，程序不崩。"], ["具体异常", "except FileNotFoundError 比 except Exception 好，知道在防什么。"], ["返回 None", "表示「没有结果」。调用方必须检查 if x is None。"], ["预防 vs 兜底", "先检查文件存在（预防），再用 try（兜底），两个都要。"]], "tasks": ["写一个读文件的函数，文件不存在时打印人话、返回 None", "调用方检查 None，避免继续用", "故意造一个空文件，看处理", "把 except 写成具体异常类型", "对比：不接住会怎样（把 try 删掉试一次）"], "code": "import os\n\n\ndef read_file(path):\n    if not os.path.exists(path):\n        print(\"找不到文件：\", path)\n        return None\n    try:\n        with open(path, \"r\", encoding=\"utf-8\") as f:\n            return f.readlines()\n    except OSError as e:\n        print(\"读取失败：\", e)\n        return None\n\n\nlines = read_file(\"不存在.txt\")\nif lines is None:\n    print(\"没有数据，退出\")\nelse:\n    print(\"行数：\", len(lines))", "check": ["文件不存在时有提示、不崩", "能说清 try/except 的作用", "知道为什么必须检查 None"]}, {"d": 16, "title": "测试：把「对」写下来", "learn": "测试不是证明它对，是「以后你改坏了，它会告诉你」。用 Python 自带的 unittest，零安装。", "concepts": [["unittest", "Python 自带测试框架，不需要 pip install。"], ["TestCase", "测试类要继承 unittest.TestCase。"], ["test_ 开头", "方法名以 test_ 开头才会被执行。"], ["assertEqual", "断言两个值相等。不等就报错。"]], "tasks": ["新建 analyze.py，写一个 analyze_one(path) 函数", "新建 test_analyze.py，写 3 个测试", "运行 python3 -m unittest test_analyze -v", "故意改坏 analyze.py 里的一行，再跑测试，看到 FAILED", "改回来，确认全绿"], "code": "import unittest\n\nfrom analyze import analyze_one   # 假设 analyze.py 里是这个函数\n\n\nclass AnalyzeTest(unittest.TestCase):\n\n    def test_normal(self):\n        # 这里用临时文件造数据，不要依赖外部文件\n        pass\n\n    def test_empty(self):\n        pass\n\n\nif __name__ == \"__main__\":\n    unittest.main()", "check": ["3 个测试全过", "故意改坏后能看到 FAILED", "能说清 assertEqual 在干什么"]}, {"d": 17, "title": "调试：缩小范围，不要猜", "learn": "新手调试是「改一下跑一下」，老手是「先确定哪一段有问题」。调试三步法：复现 → 缩小 → 验证。", "concepts": [["复现", "让它每次都错。不能复现的 bug 修不了。"], ["二分法", "注释掉一半代码，看还错不错，快速定位区间。"], ["print 打点", "在关键位置打印变量的值和类型。新手最有效的工具。"], ["阅读报错", "从最后一行往前读，找到你自己的那一行。"]], "tasks": ["造一个除零错误：print(1/0)，看报错", "造一个 KeyError：取字典不存在的键", "造一个 IndexError：取列表第 10 个元素", "每修一个，写下「我是怎么定位的」", "练一次二分法：把 50 行代码注释一半，找 bug"], "code": "# 三个经典错误，逐个运行看报错，然后修好\n\n# 1. 除零\nprint(10 / 0)\n\n# 2. KeyError\nd = {\"a\": 1}\nprint(d[\"b\"])\n\n# 3. IndexError\nitems = [1, 2, 3]\nprint(items[10])", "check": ["能认出 ZeroDivisionError / KeyError / IndexError", "能说出调试三步法", "至少用二分法定位过一次问题"]}, {"d": 18, "title": "重构：把一坨拆成函数", "learn": "拆函数的标准不是「太长」，是「这件事有没有名字」。拆完的标志：改一处不影响别处。", "concepts": [["职责单一", "一个函数只做一件事。名字能准确概括它。"], ["参数与返回", "函数通过参数拿输入、通过 return 给结果，不靠全局变量。"], ["重构", "改结构不改行为。改完必须跑测试确认没坏。"], ["为什么拆", "能单独测、能复用、改的时候影响面小。"]], "tasks": ["拿一段 40 行的「一坨」代码（可以自己写一个）", "拆成 3 个函数：读取 / 处理 / 输出", "每个函数写一句 docstring", "改输出格式，确认处理逻辑一行都不用改", "跑测试确认没坏"], "code": "def read_lines(path):\n    \"\"\"读文件，返回行列表。\"\"\"\n    with open(path, \"r\", encoding=\"utf-8\") as f:\n        return f.readlines()\n\n\ndef compute_stats(lines):\n    \"\"\"统计总行数、空行数。\"\"\"\n    total = len(lines)\n    empty = sum(1 for line in lines if line.strip() == \"\")\n    return {\"total\": total, \"empty\": empty}\n\n\ndef print_stats(stats):\n    \"\"\"打印统计结果。\"\"\"\n    print(\"总行数：\", stats[\"total\"])\n    print(\"空行数：\", stats[\"empty\"])", "check": ["拆出 3 个职责单一的函数", "改输出时没动处理逻辑", "能说清为什么这么拆"]}, {"d": 19, "title": "模块与 import", "learn": "代码多了要分文件。import 就是「用别的文件里的东西」。", "concepts": [["模块", "一个 .py 文件就是一个模块。"], ["import", "import math 用标准库；from analyze import f 用自己写的。"], ["__name__", "if __name__ == \"__main__\": 表示「只有直接运行时才执行」。"], ["包", "文件夹 + __init__.py 就是一个包。"]], "tasks": ["把之前的函数拆到 helper.py", "在 main.py 里 import 它并调用", "加 if __name__ == \"__main__\": 保护", "试试直接运行 helper.py，看会不会执行测试代码"], "code": "# helper.py\ndef double(x):\n    return x * 2\n\n\nif __name__ == \"__main__\":\n    # 只有直接运行 helper.py 时才执行\n    print(double(3))\n\n\n# main.py\n# from helper import double\n# print(double(5))", "check": ["能拆文件并 import", "知道 __name__ == \"__main__\" 的作用", "知道包需要 __init__.py"]}, {"d": 20, "title": "Git：给代码留版本", "learn": "Git 让你能回到任何一个版本。改坏了不怕，这是你敢改的底气。", "concepts": [["git init", "在一个文件夹里初始化仓库。"], ["git add / commit", "把改动加入暂存，然后提交一个版本。"], ["git log", "看历史。"], [".gitignore", "告诉 Git 哪些文件不要管（比如密钥、缓存）。"]], "tasks": ["在 ~/fde-code 下执行 git init", "写一个 .gitignore（至少包含 .DS_Store 和 __pycache__/）", "git add . && git commit -m \"第一周练习\"", "改一个文件，git status 看变化", "再 commit 一次，git log 看两条记录"], "code": "# .gitignore 内容示例\n.DS_Store\n__pycache__/\n*.pyc\n.env\n*.log", "check": ["能 init / add / commit / log", "有 .gitignore", "知道绝对不能提交密钥文件"]}, {"d": 21, "title": "周项目：给工具加测试和异常处理", "learn": "把前 6 天学的合起来：给你的 batch.py 加测试、加异常处理、加 Git 提交。", "concepts": [["测试覆盖", "至少覆盖：正常、空文件、文件不存在三种情况。"], ["异常处理", "单个文件失败不能影响其他文件。"], ["提交规范", "每次 commit 说清做了什么。"]], "tasks": ["给 batch.py 的 analyze_one 写 3 个测试", "让 batch.py 遇到坏文件时跳过并记录，不整体崩", "跑测试确认全绿", "git commit 提交这一周成果", "写本周 3 行日志"], "code": "", "check": ["测试全绿", "坏文件不会导致整体崩", "有至少 3 次 commit 记录"]}]}, {"n": 4, "title": "第一个练习模块：字幕质检（不是主项目）", "goal": "用字幕质检练一遍「发现→规格→评测→交接」的小闭环。注意：这只是练习模块，主场景是分发物料模拟，不以做软件为目标。", "deliverable": "subtitle-qc v0.1：解析 SRT、5 条规则、生成 Markdown 报告、有 README", "days": [{"d": 22, "title": "认识你要处理的数据：SRT 字幕", "learn": "动手前先看懂数据格式。SRT 是影视交付里最常见的字幕格式，你必须能一眼看出结构。", "concepts": [["SRT 结构", "序号 / 时间轴 / 文本，每条之间空一行。"], ["时间码", "00:00:01,000 --> 00:00:04,000，逗号后面是毫秒。"], ["为什么转毫秒", "字符串没法算时长，转成毫秒数字才能比较和计算。"]], "tasks": ["建 ~/fde-code/subtitle-qc/", "造 samples/good.srt（3 条正常字幕）", "造 samples/bad.srt（含重叠、太短、超长）", "用肉眼标出 bad.srt 里哪几条有问题"], "code": "1\n00:00:01,000 --> 00:00:04,000\n你走的时候别回头\n\n2\n00:00:05,500 --> 00:00:09,200\n我在楼下等你", "check": ["能说清 SRT 的三段结构", "能在 bad.srt 里找出至少 3 个问题"]}, {"d": 23, "title": "写解析器", "learn": "解析 = 把文本变成结构化的数据。这是所有数据处理的第一步。", "concepts": [["split(\"\\n\\n\")", "按空行切块，每块是一条字幕。"], ["时间解析", "把 00:00:01,000 拆成时、分、秒、毫秒，算出总毫秒。"], ["数据结构", "每条变成 {\"index\", \"start\", \"end\", \"duration\", \"text\"}。"]], "tasks": ["写 subtitle_qc/parser.py", "实现 parse_time(text)", "实现 parse_srt(path)", "用 good.srt 和 bad.srt 验证条数对不对", "打印第一条，检查字段"], "code": "def parse_time(text):\n    hms, ms = text.split(\",\")\n    h, m, s = hms.split(\":\")\n    return int(h) * 3600000 + int(m) * 60000 + int(s) * 1000 + int(ms)\n\n\ndef parse_srt(path):\n    with open(path, \"r\", encoding=\"utf-8\") as f:\n        content = f.read()\n\n    items = []\n    for block in content.strip().split(\"\\n\\n\"):\n        lines = block.strip().split(\"\\n\")\n        if len(lines) < 3 or \"-->\" not in lines[1]:\n            continue\n        start_str, end_str = lines[1].split(\"-->\")\n        start = parse_time(start_str.strip())\n        end = parse_time(end_str.strip())\n        items.append({\n            \"index\": lines[0].strip(),\n            \"start\": start,\n            \"end\": end,\n            \"duration\": end - start,\n            \"text\": \" \".join(l.strip() for l in lines[2:]),\n        })\n    return items", "check": ["good.srt 解析出 3 条，bad.srt 解析出 4 条", "能说清 duration 怎么算的", "能为 parse_time 写测试"]}, {"d": 24, "title": "写质检规则", "learn": "每条规则 = 一个判断函数 + 一个业务理由。这是你的行业知识变现的地方。", "concepts": [["重叠", "后一条的开始时间 < 前一条的结束时间。"], ["CPS", "每秒字数 = 字数 / 秒数。超过 20 观众读不完。"], ["行长", "中文单行超过 20 字会被裁切。"], ["严重度", "high 必须改，medium 建议改。交付时客户最关心这个。"]], "tasks": ["写 rules.py，实现 5 条规则：重叠、太短、超长、太快、空文本", "写 run_all(items) 跑全部规则", "对 bad.srt 跑一遍，看报了几个", "逐条判断「它报得对吗」", "给每条规则写一句「为什么」"], "code": "def check_overlap(items):\n    problems = []\n    for i in range(1, len(items)):\n        prev, cur = items[i - 1], items[i]\n        if cur[\"start\"] < prev[\"end\"]:\n            problems.append({\n                \"type\": \"overlap\",\n                \"index\": cur[\"index\"],\n                \"detail\": \"和第 %s 条重叠 %d 毫秒\" % (prev[\"index\"], prev[\"end\"] - cur[\"start\"]),\n                \"level\": \"high\",\n            })\n    return problems\n\n\ndef check_cps(items, max_cps=20):\n    problems = []\n    for it in items:\n        seconds = it[\"duration\"] / 1000.0\n        if seconds <= 0:\n            continue\n        cps = len(it[\"text\"]) / seconds\n        if cps > max_cps:\n            problems.append({\n                \"type\": \"too_fast\",\n                \"index\": it[\"index\"],\n                \"detail\": \"每秒 %.1f 字\" % cps,\n                \"level\": \"high\",\n            })\n    return problems", "check": ["5 条规则能跑", "每条规则能说清业务理由", "能判断 bad.srt 的报出结果对不对"]}, {"d": 25, "title": "生成报告", "learn": "交付物不是终端里的一堆字，是一份能发给客户的报告。", "concepts": [["Markdown", "用 # 标题、| 表格 | 表示格式，纯文本但能渲染。"], ["报告结构", "文件信息 / 结论 / 问题清单。"], ["写入文件", "用 \"w\" 模式，会覆盖同名文件。"]], "tasks": ["写 report.py 的 build_report()", "生成 Markdown 报告", "写 main.py 串起来：解析 → 跑规则 → 出报告", "跑 bad.srt，打开报告看", "跑 good.srt，确认写「未发现问题」"], "code": "def build_report(path, items, problems):\n    high = [p for p in problems if p[\"level\"] == \"high\"]\n    lines = [\"# 字幕质检报告\", \"\", \"- 文件：%s\" % path, \"- 条目数：%d\" % len(items), \"\"]\n    if not problems:\n        lines.append(\"未发现问题。\")\n    else:\n        lines.append(\"发现 **%d** 个问题，其中 **%d** 个必须修改。\" % (len(problems), len(high)))\n    lines += [\"\", \"| 严重度 | 条目 | 类型 | 说明 |\", \"|---|---|---|---|\"]\n    for p in problems:\n        lines.append(\"| %s | %s | %s | %s |\" % (p[\"level\"], p[\"index\"], p[\"type\"], p[\"detail\"]))\n    return \"\\n\".join(lines)", "check": ["能生成 report.md", "bad.srt 报告至少 3 个问题", "good.srt 写「未发现问题」"]}, {"d": 26, "title": "写 README（别人的入口）", "learn": "没有 README 的东西，等于没做。别人不知道怎么用，就不会用。", "concepts": [["README 五部分", "做什么 / 怎么用 / 输出什么 / 检查什么 / 已知限制。"], ["已知限制", "主动写「它会在哪坏」，比写「它多牛」更能建立信任。"], ["可复现", "陌生人照 README 能跑起来，才算交付。"]], "tasks": ["写 README.md，包含五部分", "找一个不懂编程的人，让他照 README 跑一次", "记录他卡在哪", "根据卡点改 README"], "code": "# 字幕质检工具\n\n## 做什么\n读一个字幕文件，检查 5 类问题，生成报告。\n\n## 怎么用\n    python3 main.py samples/bad.srt\n\n## 检查什么\n1. 时间轴重叠\n2. 单条太短（<0.8 秒）\n3. 单行太长（>20 字）\n4. 阅读速度太快（>20 字/秒）\n5. 空文本\n\n## 已知限制\n- 只支持 .srt\n- 阈值写死在代码里", "check": ["README 五部分齐全", "有真人照 README 跑通过", "记录了对方卡在哪"]}, {"d": 27, "title": "不用看 AI 的答案，复述核心函数", "learn": "今天是检验：你到底学会了没有。重写 parse_srt，限时 60 分钟。", "concepts": [["默写检验", "不看代码、不查资料，从空白写。写不出来的地方就是没学会。"], ["卡点记录", "每卡一次记一笔，那是你的学习地图。"]], "tasks": ["不用看 AI 的答案、不用看之前的代码", "从空白重写 parse_time 和 parse_srt", "限时 60 分钟", "写完对照原版，找出 3 个差异", "把卡住的地方写成清单"], "code": "", "check": ["60 分钟内写出能跑的版本（哪怕不完整）", "有 3 条以上卡点记录", "能说出自己和原版的差异"]}, {"d": 28, "title": "第一次「交付」", "learn": "把你的工具发给一个真人用。这是你从「自己做着玩」到「交付」的分界线。", "concepts": [["交付", "别人能用起来，才叫交付。自己能跑不算。"], ["问对问题", "不要问「怎么样」，要问「哪里最没用」。"], ["收反馈", "记录原话，不要美化。"]], "tasks": ["把 subtitle-qc 发给一个前同事/行业朋友", "话术：我做了个字幕质检工具，你手上有没有交付过的字幕，我免费帮你跑一份报告", "记录他的原话", "记录他卡在哪", "根据反馈改一处"], "code": "", "check": ["发出去了", "有真实反馈记录", "改了至少一处"]}]}, {"n": 5, "title": "评测：证明它有用（最重要）", "goal": "给你的工具建立评测集，算出检出率、误报、耗时。这是你和「只会做 demo 的人」的分水岭。", "deliverable": "一份带数字的评测报告 + badcase 归因", "days": [{"d": 1, "title": "黄金集20例：先定通过线", "learn": "评测不是演示那天运气好，是20个真实案例：10个常规、5个难的、5个绝不能错的。每例写清输入、期望输出、绝不能错的标记。先定通过线再跑：比如检出率≥85%、误报率≤10%、绝不能错的5例必须全过。线定在跑之前，才叫评测；跑完再定，叫讲故事。", "concepts": [["评测集", "20个真实案例：10个常规、5个难的、5个绝不能错的。先定通过线，再跑。"], ["验收标准", "做到什么程度算好：一个数字加一个日期。写在前面，客户点头。"]], "tasks": ["把W0 Day5列的20个分发物料案例升级：每例补上输入、期望输出、绝不能错的标记", "写下通过线：检出率、误报率、耗时上限，绝不能错的5例写「0容忍」", "把通过线发给Goku，让它演客户点头或砍价"], "code": "", "check": ["20例每例都有输入和期望输出", "通过线是数字，不是「更快更好」", "绝不能错的5例有名字"]}, {"d": 2, "title": "写评测脚本：一条命令出数字", "learn": "手算评测跑两次就没人愿意跑了。写一个评测脚本：一条命令跑完全集，输出命中、漏报、误报、检出率，存成JSON。以后每次改动都跑它，数字进版本记录。", "concepts": [["评测 / Eval", "用一批已知答案的数据，算出系统的准确率。"], ["回归", "改一次就全量重跑，数字变差就回滚。"]], "tasks": ["让Claude按你的规格写一个评测脚本：读黄金集、跑工具、算命中/漏报/误报/检出率", "跑一次，把结果存成 eval-2026-11-11.json", "故意改坏一个阈值，再跑一次：看数字怎么变"], "code": "import json\n\n# 评测脚本骨架：黄金集每条有 input / expected / must_pass\n# 跑完输出：命中、漏报、误报、检出率，存成 JSON\nwith open('golden.json', encoding='utf-8') as f:\n    cases = json.load(f)\nprint('共', len(cases), '例')", "check": ["一条命令能跑完全集", "输出有命中/漏报/误报/检出率", "结果存成了JSON文件"]}, {"d": 3, "title": "轨迹评测：答案对了，过程也对吗", "learn": "Agent的答案对了，不代表过程对了：它可能调错了工具、调对了但顺序错了、该停的时候没停。轨迹评测就是看这三样：调了什么工具、按什么顺序、该停时停没停。给每条失败标清楚：是答案错，还是轨迹错。", "concepts": [["轨迹评测", "不只看最后答案对不对，还要看它调对了工具没有、按对了顺序没有、该停的时候停了没有。"]], "tasks": ["挑3条跑对的案例，翻它的调用记录：工具、顺序、停没停", "挑2条跑错的案例，标清楚：答案错还是轨迹错", "写下1条规则：下次轨迹错了，先改什么"], "code": "", "check": ["能说出3条对的案例走了什么轨迹", "失败分清了答案错还是轨迹错", "有一条「轨迹错了先改什么」的规则"]}, {"d": 4, "title": "三道门：准确率、安全、延迟", "learn": "字节的FDE岗写得很清楚：评估管道要保证准确性、安全性和延迟要求。三道门都要过，缺一道都不算过。准确率门：检出率、误报率；安全门：绝不能发错版本、绝不能泄露客户数据、敏感操作要人批；延迟门：单条超时多少秒算失败。门写成数字，写进评测脚本里自动判。", "concepts": [["护栏", "「绝不能自动发出去」「超过多少钱要人批」这种规则，要写成能测的。"], ["可观测性", "出了问题能不能找到原因：日志在哪、指标是什么、谁能看。"]], "tasks": ["给你的工具定三道门，每道门一个数字", "安全门写2条「绝不能」：发错版本、泄露数据", "延迟门：单条超过几秒算失败，失败了走什么兜底"], "code": "", "check": ["三道门每道都有数字", "安全门有2条绝不能", "延迟超了知道走什么兜底"]}, {"d": 5, "title": "badcase归因：错在哪一类", "learn": "每条失败都要归因，分四类：数据错、规格不清、模型错、工具错。归因错了，改的方向就错：数据错去调模型，越调越坏。归因表要写下来，一条失败一行，类别、证据、下一步改什么。", "concepts": [["调试", "先复现、再缩小范围、最后写测试验证。不是猜。"]], "tasks": ["把评测里的失败逐条归因，分到数据/规格/模型/工具四类", "每类写一句：下一步改什么", "挑归因最难的一条，写下你是怎么排除其他三类的"], "code": "", "check": ["每条失败都有类别", "每类都有下一步改什么", "能讲清一条难归因是怎么排除的"]}, {"d": 6, "title": "回归与仪表盘：改一次，全量重跑", "learn": "每次改动（改阈值、改提示词、换模型）都要全量重跑评测集，对比上版数字：变好了才能上，变差了就回滚。再做一张指标表：准确率、误报率、平均耗时、成本/条。这张表就是给客户看的证据，也是你上线后每天要看的仪表盘。", "concepts": [["指标", "能被人用来做决定的数字。比如「检出率 85%」。"], ["AgentOps", "把Agent当软件管：版本、观测、持续评测、上线要过质量关。"]], "tasks": ["改一个阈值，全量重跑，对比上版数字，写下「这版值不值得上」", "做一张指标表：准确率、误报率、平均耗时、成本/条", "把指标表写进README，数字变了就更新"], "code": "", "check": ["改一次就全量重跑了", "有新旧两版数字对比", "指标表有4个数：准确率、误报率、耗时、成本"]}, {"d": 7, "title": "评测报告：写一页带数字的证据", "learn": "评测的终点不是脚本，是一页客户能看懂的报告：通过线是多少、实测数字是多少、badcase归因是什么、还差什么。这份报告就是你交付时给客户的证据，也是你简历里能写数字的来源。", "concepts": [["商业价值", "省了多少钱、多赚了多少钱、错一次赔多少钱。只讲技术多先进，等于没讲。"]], "tasks": ["写一页评测报告：通过线、实测数字、badcase归因、还差什么", "把报告发给Goku，让它演客户问3个追问", "回答不上来的追问，记下来，下周补"], "code": "", "check": ["报告一页，有数字", "能回答客户3个追问", "回答不上的记下来了"]}]}, {"n": 6, "title": "做得更专业：配置、日志、多格式", "goal": "让工具能适配不同客户：阈值可配置、有日志、支持 .ass、批量、失败不崩。", "deliverable": "subtitle-qc v1.0：可配置、有日志、支持多格式、有运行摘要", "days": []}, {"n": 7, "title": "加 AI：翻译与术语一致性", "goal": "接大模型做翻译，用代码做术语校验，算清成本，处理失败。", "deliverable": "带 AI 翻译和术语校验的 v1.5，有成本和失败兜底", "days": []}, {"n": 8, "title": "上云：让别人点开就能用", "goal": "把工具包成 Web 服务，Docker 化，部署上线，加日志和监控。", "deliverable": "一个能访问的地址 + runbook", "days": [{"d": 1, "title": "FastAPI服务：POST /qc + GET /health", "learn": "把工具包成Web服务：POST /qc 收字幕文件、返回质检报告；GET /health 返回ok，让别人能随时查它活没活。先本地跑通：curl调一次，看返回的JSON对不对。接口就是别人用你的工具的唯一入口，接口定好了，部署、监控、交接都有地方挂。", "concepts": [["API", "别人给你留的「窗口」，你按格式发请求，它按格式回数据。"], ["HTTP", "浏览器和服务器说话的方式。GET 取数据，POST 提交数据，200 成功，404 找不到。"]], "tasks": ["让Claude按规格写一个FastAPI服务：POST /qc、GET /health", "本地跑起来，curl调一次POST /qc，看返回的JSON", "让Claude用大白话解释：请求从哪进、数据怎么流、出错了返回什么"], "code": "from fastapi import FastAPI\n\napp = FastAPI()\n\n@app.get('/health')\ndef health():\n    return {'status': 'ok'}\n\n@app.post('/qc')\ndef qc():\n    return {'report': '先跑通，再接真实质检逻辑'}", "check": ["本地能跑起来", "GET /health 返回ok", "POST /qc 能返回JSON"]}, {"d": 2, "title": "Docker打包：到哪都能跑", "learn": "本地能跑，别人机器上跑不起来，等于没做。Docker就是把程序和环境打进一个「集装箱」，到哪都一样跑。写Dockerfile，镜像能起来。记住一条铁律：密钥放环境变量，绝不写进代码，也绝不写进镜像。", "concepts": [["Docker", "把程序和环境打包成一个「集装箱」，到哪都能跑。"], ["部署", "把程序放到一台别人也能访问的机器上。"]], "tasks": ["让Claude写Dockerfile，本地build一次", "镜像跑起来，调一次GET /health", "检查：镜像里有没有密钥？代码里有没有密钥？"], "code": "", "check": ["镜像能build", "镜像跑起来能调通/health", "密钥不在代码和镜像里"]}, {"d": 3, "title": "私有化部署：数据不出域", "learn": "字节的FDE岗反复写「私有化部署」：客户的数据不能出它的内网，模型和服务要部署到客户环境里。你要会画一张部署图：服务放哪台机器、端口开哪个、谁能访问、数据经过哪几步、哪一步出不了域。画不出来，就说明你还没想清楚。", "concepts": [["私有化部署", "服务和数据部署在客户自己的环境里，不出域。先画部署图：放哪、谁能访问、数据怎么走。"], ["权限", "谁能看什么、谁能改什么。最小权限，敏感操作要人批。"]], "tasks": ["画一张私有化部署图：服务放哪、端口、谁能访问、数据怎么走", "写下3条「数据不出域」的检查项", "让Goku演客户IT，问你2个安全问题"], "code": "", "check": ["部署图画出来了", "3条不出域检查项写了", "能回答客户IT的2个安全问题"]}, {"d": 4, "title": "沙箱与权限：坏了也出不了圈", "learn": "Agent能调什么工具、不能调什么，要写成清单；敏感操作（发出去、删数据、花钱）必须人批。沙箱就是给Agent划一个圈：在圈里跑，坏了也出不了圈。字节Code M那条岗写了「Agent沙箱部署」，就是这个意思。", "concepts": [["沙箱", "给Agent划一个圈：只能调白名单里的工具，敏感操作要人批，坏了也出不了圈。"]], "tasks": ["列一张工具白名单：你的Agent能调什么、绝不能调什么", "写2条「必须人批」的规则", "故意让Agent调一个白名单外的工具，看它被拦住了没有"], "code": "", "check": ["白名单列出来了", "2条人批规则写了", "白名单外的调用被拦住了"]}, {"d": 5, "title": "云原生够用线：K8s和Serverless", "learn": "字节要求「熟悉云原生技术栈（K8s、Serverless）」。你不用会搭，但要到「够指挥」的线：K8s是管一堆容器的，Serverless是不用管服务器、按用多少付多少。知道什么时候用哪个、大概多少钱、运维说的「扩容」「回滚」是什么意思，能判断报价合不合理。", "concepts": [["云原生", "K8s管一堆容器，Serverless按用多少付多少。不用会搭，但要听得懂、判得了报价。"]], "tasks": ["让Claude用大白话讲：K8s和Serverless各是什么、什么时候用、多少钱", "写下3句话：你的工具现在需不需要上云原生，为什么", "问Claude一个它答不上来的问题：你的工具上云之后，哪个环节最可能先坏"], "code": "", "check": ["能讲清K8s和Serverless的区别", "能说清自己的工具需不需要上云", "知道上云后最可能先坏的环节"]}, {"d": 6, "title": "可观测性：日志、指标、告警", "learn": "上线之后，出问题能不能找到原因，靠三样：日志（发生了什么）、指标（请求数、失败数、平均耗时）、告警（坏了谁先知道）。加请求日志和/metrics接口，指标至少4个：请求数、失败数、平均耗时、成本。出问题先看日志，再看指标，不要猜。", "concepts": [["日志", "程序运行时记下「发生了什么」。出问题靠它定位。"], ["可观测性", "出了问题能不能找到原因：日志在哪、指标是什么、谁能看。"]], "tasks": ["给服务加请求日志，分级：INFO、WARN、ERROR", "加/metrics：请求数、失败数、平均耗时", "故意调一次错的请求，看日志里能不能找到它"], "code": "", "check": ["日志分级了", "/metrics有4个指标", "一次错误请求能在日志里找到"]}, {"d": 7, "title": "runbook与故障演练：回滚要一键能做", "learn": "本地能跑和线上能用的差别，就在这一天：删Key、传空文件、磁盘满、模型超时，逐个演练定位。写runbook：启动、重启、回滚、查日志。回滚要一键能做，不能靠人现想。演练完才算这一周过关。", "concepts": [["交接", "你走了，别人能独立跑起来：怎么跑、数据在哪、哪3处最可能坏、找谁。"]], "tasks": ["做4个故障演练：删Key、传空文件、磁盘满、模型超时，逐个定位", "写runbook：启动、重启、回滚、查日志", "回滚演练一次：从坏版本回到上一个好版本，要几步、几分钟"], "code": "", "check": ["4个故障都演练定位了", "runbook写了", "回滚演练过，知道要几步"]}]}, {"n": 9, "title": "交付：文档、演示、交接", "goal": "写交付四件套，录 3 分钟演示，找 2 个真人用。", "deliverable": "README + 架构图 + runbook + 已知限制 + demo 视频", "days": []}, {"n": 10, "title": "读透一个陌生系统（SkillRadar）", "goal": "用 5 步法读你自己那个 AI 写的 1.1 万行系统，找到 3 处静默出错的地方。", "deliverable": "能讲 30 分钟的深度案例 + 交接文档", "days": []}, {"n": 11, "title": "写成案例，准备面试", "goal": "写 3 个案例、中英简历、8 个 STAR 故事，练 3 道送命题。", "deliverable": "3 个案例 + 简历 + 模拟面试记录", "days": []}, {"n": 12, "title": "打包投递", "goal": "GitHub、作品集、投 3 个岗位、写下一个 90 天计划。", "deliverable": "可公开的作品集 + 投递记录", "days": []}], "weekDetail": {"5": ["D1 造 20 条黄金集：人工标出每条字幕该报什么问题（至少 5 条故意没问题）", "D2 写评测脚本：一条命令算出命中/漏报/误报/检出率", "D3 逐条分析 badcase：每条写清「为什么漏/为什么误报」", "D4 版本对比：改一个阈值，做对比表，判断「这版值不值得上」", "D5 把评测数字写进 README", "D6 诚实检查：我的测试集是不是太简单？换真实字幕会掉多少？", "D7 复盘：写下「评测让我第一次看到什么」"], "6": ["D1 阈值外置到 config.json，命令行可覆盖", "D2 加 logging，替换所有 print，输出到 run.log，分级 INFO/WARN/ERROR", "D3 支持 .ass 格式（时间格式和 SRT 不同）", "D4 支持传文件夹批量处理，出汇总报告", "D5 失败重试 + 先写 tmp 再 os.replace，不留半成品", "D6 每次运行输出「运行摘要」：处理几个/成功几个/失败几个/耗时，并加 /metrics 指标（请求数/失败数/平均耗时）", "D7 复盘：给新功能补测试，测试总数 ≥12"], "7": ["D1 第一次调用大模型 API（Key 存环境变量，绝不写进代码）", "D2 用结构化输出约束模型，要求只返回 JSON，解析失败重试3次，仍失败走人工兜底", "D3 术语表机制：提示词约束 + 代码二次校验", "D4 成本核算：记录 token、算每条多少钱", "D5 四种失败兜底：超时/限流/格式错/内容被拒", "D6 用 mock 给 AI 部分写测试（不真的联网）", "D7 复盘：AI 部分哪里最容易出错"], "8": ["D1 用 FastAPI 暴露 POST /qc 和 GET /health", "D2 写 Dockerfile，镜像能起来", "D3 部署到云服务器或内网穿透，有可访问地址", "D4 加请求日志和 /metrics（请求数/失败数/平均耗时）", "D5 故障演练：删 Key、传空文件、磁盘满，逐个定位", "D6 写 runbook：启动/重启/回滚/查日志", "D7 复盘：本地能跑和线上能用的差别"], "9": ["D1 写 README（5 分钟能跑起来）", "D2 画架构图，标出人工介入点", "D3 写 RUNBOOK 和 LIMITATIONS（至少 5 条）", "D4 录 3 分钟 demo：痛点→方案→演示→数字→取舍→限制", "D5 发给 2 个真人用，记录反馈", "D6 根据反馈改，写 DELIVERY.md 交付复盘，并沉淀至少1个可复用资产（Skill/模板/评测集），把客户共性需求写成1条产品反馈", "D7 复盘：用户最在意的和我以为的一样吗"], "10": ["D1 找入口：cli.py 的 main 支持哪些子命令", "D2 追一条数据流：GitHub API → 数据库 → 报告，画出图", "D3 审计 scoring.py：六个维度怎么算、许可证硬门槛在哪", "D4 找 3 处「静默出错」的地方（db.py 事务边界是一个）", "D5 画模块依赖图，找出被依赖最多和最乱的", "D6 写 HANDOVER.md 交接文档", "D7 对着屏幕讲 30 分钟并录音，回听标记卡点"], "11": ["D1 写主案例：subtitle-qc（问题→方案→取舍→数字→限制）", "D2 写深度案例：我读了一个 AI 写的系统", "D3 写第三案例：GOKU 交接包（证明会管上下文）", "D4 写简历（一页，每个项目带数字）", "D5 准备 8 个 STAR 故事，每个 60–90 秒", "D6 练 3 道送命题：没工程经验 / 代码是 AI 写的 / 年龄", "D7 模拟面试 45 分钟，记录被问住的问题"], "12": ["D1 整理 GitHub 仓库，README 加演示和数字", "D2 做一页作品集索引（3 个项目 + 链接）", "D3 发给 5 个人，问「哪里最没用」", "D4 投 3 个岗位，记录反馈", "D5 复盘 12 周：能做什么、短板是什么、下一步学什么", "D6 写下一个 90 天计划（3 个目标，每个有衡量标准）", "D7 休整 + 决定：接单还是投简历"]}, "concepts": [["电脑只会三件事", "搬数据、算数、按条件跳转。所有程序都是这三件事的组合。"], ["程序", "一串按顺序执行的指令。电脑不猜你的意思，只照着做。"], ["源代码 vs 可执行", "你写的 .py 是人看的；解释器把它翻译成机器能执行的动作。"], ["变量", "给一个值起个名字。a = 1 意思是「把 1 叫做 a」。"], ["类型", "数据的形状：文字（str）、整数（int）、小数（float）、真假（bool）、列表（list）、字典（dict）。"], ["函数", "给一段代码起名字，可以反复调用。通过参数拿输入，通过 return 给结果。"], ["参数 / 返回值", "参数是函数的输入，返回值是输出。不写 return 就返回 None。"], ["模块 / 包", "一个 .py 文件是模块；一个带 __init__.py 的文件夹是包。"], ["import", "使用别的文件里的东西。import math 用标准库，from x import y 用自己写的。"], ["异常", "程序出错时抛出的信号。try/except 可以接住，不让程序崩。"], ["测试", "把「输入 X 应该得到 Y」写成代码。价值在「你改坏了它告诉你」。"], ["调试", "先复现、再缩小范围、最后写测试验证。不是猜。"], ["重构", "改结构不改行为。拆函数的标准是「这件事有没有名字」。"], ["API", "别人给你留的「窗口」，你按格式发请求，它按格式回数据。"], ["HTTP", "浏览器和服务器说话的方式。GET 取数据，POST 提交数据，200 成功，404 找不到。"], ["JSON", "最常见的结构化数据格式。{\"键\": 值}。对应 Python 的 dict。"], ["数据库", "存数据的地方。SQL 是跟它说话的语言。表 = 一类数据，行 = 一条记录。"], ["SQL", "SELECT（查）/ INSERT（加）/ UPDATE（改）/ DELETE（删）。JOIN 把两张表连起来。"], ["命令行 / 终端", "用文字给电脑下命令的窗口。不是黑魔法。"], ["路径", "文件在电脑里的地址。/Users/xxx/文件 是绝对路径，./文件 是相对当前目录。"], ["Git", "给代码留版本。能回到任何一个版本，这是你敢改的底气。"], ["部署", "把程序放到一台别人也能访问的机器上。"], ["Docker", "把程序和环境打包成一个「集装箱」，到哪都能跑。"], ["日志", "程序运行时记下「发生了什么」。出问题靠它定位。"], ["指标", "能被人用来做决定的数字。比如「检出率 85%」。"], ["LLM / 大模型", "能理解和生成文字的模型。你给它文字，它给你文字。"], ["提示词", "你给模型的指令。说得越清楚、约束越明确，输出越稳定。"], ["Token", "模型计费的单位，也是它一次能处理的文字量单位。"], ["RAG", "先检索资料，再把资料给模型，让它基于资料回答。解决「模型不知道你的数据」。"], ["Agent", "能自己决定调用哪些工具、分几步完成任务的程序。"], ["评测 / Eval", "用一批已知答案的数据，算出系统的准确率。"], ["幻觉", "模型编出看起来对、其实错的内容。"], ["FDE", "被派到客户现场，把模型能力变成客户流程里真实在跑的东西，并对结果负责的工程师。"], ["发现", "跟班看真实工作，拿到原话和数字，而不是听客户说「想要个AI」。"], ["一页问题定义", "用户、场景、现在的做法、目标数字、不做什么，写在一页纸上，客户点头才算过。"], ["工作流重写", "把旧流程拆开重排，标出AI、人、人审的分工。只加聊天机器人、不改流程，是最常见的失败方式。"], ["规格", "身份、输入输出、工具、数据、护栏、完成标准、限制，七项缺一不可。"], ["护栏", "「绝不能自动发出去」「超过多少钱要人批」这种规则，要写成能测的。"], ["评测集", "20个真实案例：10个常规、5个难的、5个绝不能错的。先定通过线，再跑。"], ["轨迹评测", "不只看最后答案对不对，还要看它调对了工具没有、按对了顺序没有、该停的时候停了没有。"], ["基线", "现在要多久、花多少钱、错几次。没有基线，就没法证明你帮上了忙。"], ["采用率", "有多少人在用，每周用几次。没人用就等于没做。"], ["商业价值", "省了多少钱、多赚了多少钱、错一次赔多少钱。只讲技术多先进，等于没讲。"], ["交接", "你走了，别人能独立跑起来：怎么跑、数据在哪、哪3处最可能坏、找谁。"], ["说不", "客户要的东西不值得做，要敢砍掉，并说清代价。"], ["MCP", "Agent调工具的统一插口。模型只负责判断，事实都由你的工具给。"], ["AgentOps", "把Agent当软件管：版本、观测、持续评测、上线要过质量关。"], ["PoC", "最小验证：先拿20个真例子跑一遍，算准不准、快多少、花多少钱，再决定做多大。"], ["验收标准", "做到什么程度算好：一个数字加一个日期。写在前面，客户点头。"], ["RACI", "谁负责、谁批准、谁咨询、谁知情。流程一乱，先查这个。"], ["权限", "谁能看什么、谁能改什么。最小权限，敏感操作要人批。"], ["成本", "一单多少钱、一个月多少钱、有没有上限。超了就拦住。"], ["分发物料", "成片、预告、海报、字幕同时发给影院、流媒体、短视频、海外四家，每家规格、审核、权限都不一样。"], ["技术判断力", "不用会写代码，但要会读框架、读数据流、判好坏、做验收。这是FDE最核心的能力之一。"], ["框架", "代码的骨架：分几层、每层干什么、谁调谁。先看骨架，再看细节。"], ["数据流", "数据从哪来、经过哪几步、到哪去。画出来，错的地方就藏在这条线上。"], ["副作用", "代码除了返回结果，还改了什么：写了文件、发了请求、删了数据。副作用是最容易出事的地方。"], ["入口", "程序从哪开始跑。找到入口，再顺着数据流往下读。"], ["边界条件", "空数据、超长、重名、断网、权限不足。好代码先想坏情况。"], ["代码评审", "不自己写，替别人（或AI）写的代码把关：对不对、全不全、稳不稳。"], ["验收清单", "交付之后分三栏：能用、不能用、要人先审。写在前面，客户点头。"], ["技术债", "今天图快留下的坑，明天要还。FDE要会说清这笔债有多大。"], ["可观测性", "出了问题能不能找到原因：日志在哪、指标是什么、谁能看。"], ["Vibe coding", "用AI写代码。字节明写的要求：熟练掌握Vibe coding。会用是入场券，能看出AI写得对不对才是门槛。"], ["生产级代码", "不只是能跑：异常、测试、日志、配置、部署、回滚，缺一不可。能跑的demo和能上线的服务，差的就是这些。"], ["Agent架构", "Workflow、ReAct、MultiAgent三种搭法：固定流程、边想边调、多Agent分工。先想清楚场景，再选架构。"], ["上下文管理", "Agent一次能记住多少、哪些要带进下一轮、哪些该扔掉。上下文满了，Agent就开始胡说。"], ["记忆管理", "哪些要长期记住（客户偏好、术语表）、哪些只是临时。记忆不是越多越好，是越准越好。"], ["RAG链路", "检索→给模型→回答。链路里每一步都能坏：切得太碎、召回不准、给了模型它也不用。"], ["知识切片", "把文档切成多大的块给模型。切太大，模型找不到重点；切太碎，意思断了。"], ["语义层/Ontology", "给数据起统一的名字和关系：这个字段到底是什么意思、和哪个字段是一回事。Agent能不能用你的数据，就看这一层。"], ["AI-ready数据", "数据要让Agent能消费：语义清晰的元数据、上下文友好的结构、适配RAG的知识组织。"], ["ETL", "抽取、转换、加载：把脏数据洗干净、变格式、放进能用的地方。数据质量决定AI效果。"], ["数据治理", "谁负责数据对不对、谁能改、改了谁知道。没有治理，数据越用越脏。"], ["私有化部署", "服务和数据部署在客户自己的环境里，不出域。先画部署图：放哪、谁能访问、数据怎么走。"], ["沙箱", "给Agent划一个圈：只能调白名单里的工具，敏感操作要人批，坏了也出不了圈。"], ["云原生", "K8s管一堆容器，Serverless按用多少付多少。不用会搭，但要听得懂、判得了报价。"], ["字节FDE对照", "字节36个FDE岗要的六组能力：生产代码、Agent架构、评测可观测、数据工程、部署安全、端到端负责。对照它填自查表。"]], "quiz": [{"q": "程序本质上是什​么？", "a": ["一堆按顺序执行的指令", "一种数据库", "一种设计图", "一种网页"], "ok": 0, "why": "程序就是指令序列。电脑不会猜你的意思。"}, {"q": "a = 1 是什么意思？", "a": ["a 等于 1，永远不变", "把 1 这个值叫做 a", "比较 a 和 1", "创建一个文件"], "ok": 1, "why": "变量是「给值起名字」，之后 a 还可以被改成别的值。"}, {"q": "print 和 return 的区别？", "a": ["没区别", "print 给人看，return 给程序用", "return 更快", "print 只能在函数里用"], "ok": 1, "why": "混了就会出 bug：函数只 print 不 return，调用方拿到的是 None。"}, {"q": "为什么判断空行要用 line.strip() == \"\"？", "a": ["因为 strip 更快", "因为空行读出来是 \"\\n\" 不是 \"\"", "因为 Python 要求", "因为 strip 会删除行"], "ok": 1, "why": "文件里的空行是换行符，strip() 去掉后才等于空字符串。"}, {"q": "字典取值用 [] 还是 get()？", "a": ["永远用 []", "数据可能缺字段时用 get()", "get() 更快", "没区别"], "ok": 1, "why": "真实数据经常缺字段。[] 会报 KeyError，get() 可以给默认值。"}, {"q": "测试最大的价值是什么？", "a": ["证明代码写得对", "通过公司检查", "你改坏时它告诉你", "让代码跑得更快"], "ok": 2, "why": "测试是回归防线，不是一次性验收。"}, {"q": "看到 Traceback 应该先看什么？", "a": ["第一行", "最后一行和 File/line", "中间一大段", "不用看"], "ok": 1, "why": "最后一行是错误类型和原因，File/line 告诉你在哪。"}, {"q": "JSON 的 null 对应 Python 的什么？", "a": ["0", "空字符串", "None", "False"], "ok": 2, "why": "null = 没有值 = None。"}, {"q": "CSV 读出来的数字是什么类型？", "a": ["int", "float", "字符串", "自动识别"], "ok": 2, "why": "CSV 全是字符串，要 int() 转换才能比较大小。"}, {"q": "FDE 和产品经理最大的差别？", "a": ["FDE 更懂业务", "FDE 对一个客户的多个能力、直到生产上线都负责", "FDE 不出差", "没差别"], "ok": 1, "why": "产品经理管一个能力、服务很多客户；FDE扎在一个客户身上，把多个能力接进它的系统、权限和流程里，直到有人用、指标变了。"}, {"q": "客户说「别再发错版本了」，你先问什么？", "a": ["你们想要什么功能", "上次发错是哪一次、错在哪、谁发现的", "你们预算多少", "用什么模型"], "ok": 1, "why": "先要真例子和数字，不要功能清单。"}, {"q": "一页问题定义里最不能少的是什么？", "a": ["技术选型", "目标数字加日期", "公司介绍", "模型名字"], "ok": 1, "why": "没有数字和日期，就没法验收。"}, {"q": "工作流重写是什么意思？", "a": ["加一个聊天机器人", "把流程拆开重排，标出AI、人、人审的分工", "换一个更强的模型", "把界面做漂亮"], "ok": 1, "why": "只加机器人、不改流程，是最常见的失败方式。"}, {"q": "规格七项里不包括哪一项？", "a": ["护栏", "完成标准", "模型参数调优细节", "输入输出"], "ok": 2, "why": "规格写的是身份、输入输出、工具、数据、护栏、完成标准、限制，不是调参。"}, {"q": "评测集为什么要先定通过线？", "a": ["显得专业", "防止事后改标准，跑多少分都算赢", "客户要求的", "没什么用"], "ok": 1, "why": "线定在跑之前，才叫评测；跑完再定，叫讲故事。"}, {"q": "20个评测案例应该怎么分？", "a": ["随便找20个", "10个常规、5个难的、5个绝不能错的", "20个都最难的", "20个都最简单的"], "ok": 1, "why": "绝不能错的那5个，是安全和合规的底线。"}, {"q": "用户不用你做的东西，你怎么办？", "a": ["发个使用文档", "坐到用户旁边看他卡在哪，改流程", "换个模型再试", "怪用户不懂"], "ok": 1, "why": "采用率是FDE的指标，不是用户的义务。"}, {"q": "MCP 是什么？", "a": ["一种大模型", "Agent调工具的统一插口", "一种数据库", "一种编程语言"], "ok": 1, "why": "模型只负责判断，事实都由你的工具给。"}, {"q": "摩根士丹利案例里，花时间最长的是哪一步？", "a": ["搭技术", "取得顾问信任的试点", "写代码", "买服务器"], "ok": 1, "why": "技术6到8周，信任花了4个月。落地难在信任，不在搭建。"}, {"q": "交接算完成的标志是什么？", "a": ["发了文档", "演示那天没崩", "接手的人能独立跑起来", "客户说谢谢"], "ok": 2, "why": "你走了，别人能跑，才算完成。"}, {"q": "Claude写了一段代码，你第一步应该看什么？", "a": ["每一行是什么意思", "框架：入口在哪、数据怎么流、输出是什么", "用了几个函数", "代码有多长"], "ok": 1, "why": "先看骨架，再看细节。骨架错了，细节再对也没用。"}, {"q": "面包类比里，「水加多了」对应代码里的什么？", "a": ["功能做太多了", "边界没处理、数据多了或脏了", "跑得太慢", "界面太丑"], "ok": 1, "why": "水是原料，对应数据；糖是调味，对应功能；温度对应性能和成本。"}, {"q": "判断一段代码好坏，应该分哪三层？", "a": ["长短、颜色、名字", "对不对、全不全、稳不稳", "贵不贵、快不快、新不新", "谁写的、哪天写的"], "ok": 1, "why": "对不对是评测，全不全是边界，稳不稳是权限、成本和失败兜底。"}, {"q": "交付之后，你怎么分清哪些能用、哪些不能用？", "a": ["凭感觉", "写验收清单，分三栏：能用、不能用、要人先审", "问Claude", "都先用了再说"], "ok": 1, "why": "验收清单写在前面，客户点头，交付时照单点。"}, {"q": "代码里最容易出事的地方是哪里？", "a": ["注释", "副作用：写文件、发请求、删数据", "变量名", "空行"], "ok": 1, "why": "返回结果看得见，副作用看不见。先问它还改了什么。"}, {"q": "字节要求Vibe coding，但真正的门槛是什么？", "a": ["会用AI写代码", "能看出AI写得对不对、能验收", "会背提示词模板", "写得比别人快"], "ok": 1, "why": "会用AI是入场券，能看出对不对才是门槛。只会指挥、不会验收，等于把方向盘交给了AI。"}, {"q": "轨迹评测看什么？", "a": ["只看最后答案对不对", "调了什么工具、顺序对不对、该停时停没停", "代码有多长", "跑得有多快"], "ok": 1, "why": "答案对了过程也可能错了：调错工具、顺序错、该停没停，都是轨迹问题。"}, {"q": "AI-ready数据是什么意思？", "a": ["数据量很大", "数据能让Agent消费：语义清晰的元数据、上下文友好的结构、适配RAG的知识组织", "数据存在云上", "数据很新"], "ok": 1, "why": "Agent吃不了的数据，再多也没用。元数据、结构、知识组织，就是给Agent做的饭。"}, {"q": "私有化部署最先管什么？", "a": ["界面好不好看", "密钥进环境变量、数据不出域、权限最小、敏感操作要人批", "选哪个云厂商", "域名好不好记"], "ok": 1, "why": "私有化首先是安全和合规：密钥、数据边界、权限、人批，缺一个都不能上线。"}, {"q": "评测改一次，要不要全量重跑？", "a": ["不用，只跑改的那条", "要，全量重跑并对比上版数字，变差就回滚", "等客户发现再跑", "每月跑一次就行"], "ok": 1, "why": "只跑改的那条，看不见改坏了别处。全量重跑加对比，才叫回归。"}], "intro": [{"id": "what", "title": "一句话定义：FDE 是干什么的", "body": "\n<p class=\"lead\">FDE（Forward Deployed Engineer，前沿部署工程师）不是\"高级程序员\"，也不是\"懂技术的销售\"。<\/p>\n<p class=\"lead2\">准确的一句是：<\/p>\n<div class=\"callout\">\n  <b>被派到客户现场，把模型能力变成客户流程里真实在跑的东西，并且对\"它到底有没有用\"负责的工程师。<\/b>\n<\/div>\n<p>三个关键词，缺一个就不是 FDE：<\/p>\n<table>\n  <tr><th>关键词<\/th><th>意思<\/th><th>缺了会怎样<\/th><\/tr>\n  <tr><td><b>现场<\/b><\/td><td>在客户的环境里做，不是在自己公司做<\/td><td>做出来的东西客户用不了<\/td><\/tr>\n  <tr><td><b>亲手<\/b><\/td><td>指挥实现：Claude、Codex当手，你负责验收、找错、决定上不上线<\/td><td>变成\"只提需求、不验收\"，不是 FDE<\/td><\/tr>\n  <tr><td><b>负责<\/b><\/td><td>不是\"交付了\"，是\"有人用了、指标变了\"<\/td><td>变成外包<\/td><\/tr>\n<\/table>\n<div class=\"note\">为什么这三个词重要：<b>大厂招 FDE 时，筛的就是这三样。<\/b>会写代码的人很多，愿意去现场、并且扛结果的人很少。<\/div>\n"}, {"id": "origin", "title": "它从哪来：一个 2009 年的岗位，为什么 2026 年爆了", "body": "\n<h4>2009：Palantir 造了这个词<\/h4>\n<p>\"Forward Deployed\" 是军事术语——<b>前沿部署<\/b>。意思是把兵力放到最靠近战场的地方，而不是待在后方指挥部。<\/p>\n<p>Palantir 当年做的事：政府和大企业的数据在客户自己的系统里，产品没法靠远程支持解决。所以他们把工程师<b>派到客户那里住下来<\/b>，跟客户一起把数据接上、把系统跑起来。这个岗位叫 FDSE（Forward Deployed Software Engineer）。<\/p>\n\n<h4>2023–2026：为什么突然全行业都在抢<\/h4>\n<p>因为出现了一个巨大的断层：<b>模型能力过剩，但企业落地大面积失败。<\/b><\/p>\n<table>\n  <tr><th>时间<\/th><th>公司<\/th><th>动作<\/th><\/tr>\n  <tr><td>2026<\/td><td>OpenAI<\/td><td>成立 Deployment Company，初始投资 <b>超 40 亿美元<\/b>，收购 Tomoro 带入约 150 名前线工程师<\/td><\/tr>\n  <tr><td>2026<\/td><td>Anthropic<\/td><td>联合黑石、高盛等组建企业 AI 实施公司 Ode，约 <b>15 亿美元<\/b>承诺资本<\/td><\/tr>\n  <tr><td>2026<\/td><td>AWS<\/td><td>投入 <b>10 亿美元<\/b>建 FDE 组织，目标数千人；作战方式是「5–6 人小队，45 天周期，嵌入客户现场」<\/td><\/tr>\n  <tr><td>2026<\/td><td>字节火山引擎<\/td><td>国内直接开 <b>Forward Deployed Engineer<\/b> 岗（AI 全系产品 / 财务 HR 系统方向），要求「熟练掌握 Vibe coding」<\/td><\/tr>\n  <tr><td>2026<\/td><td>阿里云<\/td><td>对应岗位叫「大模型资深交付专家」「AI 大模型解决方案工程师」，按行业拆（政企 / 汽车 / 金融）<\/td><\/tr>\n<\/table>\n<div class=\"note\">Gartner 预测：到 2026 年底，<b>超 85% 的技术供应商将以 FDE 作为 AI 的核心交付方式<\/b>。<br/>\n这不是\"一个新职位\"，这是<b>整个行业的交付方式在变<\/b>。<\/div>\n"}, {"id": "why", "title": "为什么这个岗位存在：三个断层", "body": "\n<p>理解 FDE，只要理解它要跨过的三道坎。这三道坎，就是它存在的理由。<\/p>\n\n<h4>断层一：能力断层 —— 模型会给答案，企业要的是\"在流程里跑对\"<\/h4>\n<p>调 API 产出一段文字，谁都会。但企业要的是：这段文字进入审批流、写进工单、触发付款、并且<b>错了有人担责<\/b>。<\/p>\n<p>中间隔着的不是\"更聪明的模型\"，是<b>系统集成、权限、边界、兜底<\/b>。<\/p>\n\n<h4>断层二：数据断层 —— 数据在 7 个系统里，又脏又不敢出域<\/h4>\n<ul>\n  <li>字段名是拼音缩写，没有文档<\/li>\n  <li>同一个客户三个 ID，没有主键<\/li>\n  <li>脏数据 30%，没人敢用<\/li>\n  <li>敏感数据混在里面，不能给模型看<\/li>\n  <li>内网、等保、数据出境——硬墙<\/li>\n<\/ul>\n<p><b>所以真正的活不是\"收集数据\"，是\"把数据变成能用的东西\"。<\/b>这件事八成是工程和流程，不是算法。<\/p>\n\n<h4>断层三：组织断层 —— 谁签字、谁维护、员工愿不愿意用<\/h4>\n<p>这一层最容易被技术人忽略，也是项目死得最多的地方。<\/p>\n\n<div class=\"datagrid\">\n  <div class=\"dstat\"><b>95%<\/b><span>企业生成式 AI 试点<br/>对损益没有可测量影响<\/span><\/div>\n  <div class=\"dstat\"><b>70%<\/b><span>领先者与落后者的差距<br/>投入发生在技术层之外<\/span><\/div>\n  <div class=\"dstat\"><b>40%<\/b><span>Gartner 预测<br/>到 2027 年底被取消的 Agent 项目<\/span><\/div>\n  <div class=\"dstat\"><b>7539<\/b><span>2025 年国内大模型中标项目<br/>295 亿元，同比 +356%<\/span><\/div>\n<\/div>\n\n<div class=\"callout\">\n  <b>所以 FDE 的本质工作，不是让模型更聪明，是让系统在烂环境里可靠。<\/b><br/>\n  需求爆炸和交付失败是同一枚硬币的两面——这个缺口，就是 FDE 的岗位。\n<\/div>\n"}, {"id": "cycle", "title": "一个项目周期：FDE 到底怎么干活", "body": "\n<p>把 FDE 的工作拆开，是六个阶段。这也是你 12 周要练的东西的<strong>原型<\/strong>。<\/p>\n\n<table>\n  <tr><th>阶段<\/th><th>在干什么<\/th><th>产出<\/th><th>对应 App 哪几周<\/th><\/tr>\n  <tr><td><b>① Discovery<\/b><br/>客户发现<\/td><td>访谈、看流程、找真问题（不是客户说的那个需求）<\/td><td>问题定义 + 成功指标<\/td><td>W10<\/td><\/tr>\n  <tr><td><b>② Scoping<\/b><br/>范围界定<\/td><td>定做什么、<b>明确不做什么<\/b>、验收标准、风险<\/td><td>SOW（工作说明书）<\/td><td>W9<\/td><\/tr>\n  <tr><td><b>③ Prototype<\/b><br/>原型<\/td><td>最快的路径跑通一条链路，验证数据能不能通<\/td><td>能演示的 walking skeleton<\/td><td>W1–W4<\/td><\/tr>\n  <tr><td><b>④ Evaluate<\/b><br/>评测<\/td><td>建黄金集，算准确率，分析 badcase<\/td><td>带数字的评测报告<\/td><td><b>W5<\/b><\/td><\/tr>\n  <tr><td><b>⑤ Production<\/b><br/>上线<\/td><td>部署、权限、日志、监控、失败恢复<\/td><td>能访问的服务 + runbook<\/td><td>W6–W8<\/td><\/tr>\n  <tr><td><b>⑥ Handover<\/b><br/>交接<\/td><td>文档、培训、support 期<\/td><td>四件套 + 培训<\/td><td>W9<\/td><\/tr>\n<\/table>\n\n<h4>一天大概怎么过（真实配比）<\/h4>\n<table>\n  <tr><th>时间<\/th><th>在干什么<\/th><th>占比<\/th><\/tr>\n  <tr><td>上午<\/td><td>客户访谈 / 需求对齐（业务方、IT、采购、法务，各说各话）<\/td><td>25%<\/td><\/tr>\n  <tr><td>上午<\/td><td>数据摸底（在哪、什么格式、谁能给权限）<\/td><td>15%<\/td><\/tr>\n  <tr><td>下午<\/td><td>写代码 / 搭系统（接客户 API、处理脏数据、调流程）<\/td><td>30%<\/td><\/tr>\n  <tr><td>下午<\/td><td>调评测（这版比上版好了吗？客户能接受吗？）<\/td><td>10%<\/td><\/tr>\n  <tr><td>傍晚<\/td><td>写材料（周报、方案、验收文档、培训材料）<\/td><td>15%<\/td><\/tr>\n  <tr><td>随时<\/td><td>救火（线上出问题、临时加需求、领导要看 demo）<\/td><td>5%<\/td><\/tr>\n<\/table>\n\n<div class=\"note\"><b>注意：写代码只占 30%。<\/b>另外 70% 是沟通、数据、材料、救火。<br/>\n这就是为什么\"技术很强但不爱说话\"的人做不好 FDE。<\/div>\n"}, {"id": "not", "title": "它不是什么：和五个相邻岗位的区别", "body": "\n<p>FDE 最容易和五个岗位混。分清楚，你才知道自己该练什么、以及面试时该怎么说。<\/p>\n\n<table>\n  <tr><th>岗位<\/th><th>核心动作<\/th><th>为什么不是 FDE<\/th><\/tr>\n  <tr><td><b>产品经理<\/b><\/td><td>定义做什么，交给研发<\/td><td>PM 说\"交给研发\"，FDE 说\"我做出来了，你试试\"<\/td><\/tr>\n  <tr><td><b>售前 / 解决方案架构师<\/b><\/td><td>卖方案、做 PoC<\/td><td>售前卖梦，FDE 圆梦。售前出了合同就撤，FDE 要留下来把东西跑起来<\/td><\/tr>\n  <tr><td><b>实施工程师<\/b><\/td><td>按清单配置、安装<\/td><td>实施按别人定好的清单干；FDE 要自己定义清单<\/td><\/tr>\n  <tr><td><b>普通后端工程师<\/b><\/td><td>在干净环境写服务<\/td><td>SWE 在自家代码库；FDE 在客户的烂摊子里把东西跑起来<\/td><\/tr>\n  <tr><td><b>咨询顾问<\/b><\/td><td>给建议、出报告<\/td><td>顾问交付 PPT；FDE 交付能跑的代码<\/td><\/tr>\n<\/table>\n\n<div class=\"callout\">\n  <b>记住这句话：<\/b>FDE 是\"能自己把产品做出来的产品经理\"。<br/>\n  他有产品经理的判断力，但不接受\"这个需求交给研发\"——因为他自己就是研发。\n<\/div>\n\n<h4>为什么这个区分对你重要<\/h4>\n<p>因为你的强项（行业判断、需求翻译、文档）<b>像产品经理<\/b>；你的弱项（读码、改码、验证）<b>正是研发那一半<\/b>。<br/>\n所以你的学习重点不是\"再学产品思维\"，而是<b>补上研发那一半，让判断力能落地<\/b>。<\/p>\n"}, {"id": "model", "title": "能力模型：三层，缺哪层都做不成", "body": "\n<div class=\"stack\">\n  <div class=\"layer hi\">\n    <div class=\"lv\">上层<\/div>\n    <div class=\"lt\">商业判断<\/div>\n    <div class=\"ln\">这值不值得做 / 客户的真问题是什么<\/div>\n    <p>行业认知、客户发现、ROI 判断、谁会反对。<b>AI 替不了，靠行业经验。<\/b><\/p>\n  <\/div>\n  <div class=\"layer mid\">\n    <div class=\"lv\">中层<\/div>\n    <div class=\"lt\">方案与边界<\/div>\n    <div class=\"ln\">拆成能做的步骤 / 界定做什么不做什么 / 指挥 AI<\/div>\n    <p>流程拆解、数据建模、自动化边界、写清规格、给 AI 立规矩。<b>这是\"判断力\"变成\"可执行\"的地方。<\/b><\/p>\n  <\/div>\n  <div class=\"layer low\">\n    <div class=\"lv\">下层<\/div>\n    <div class=\"lt\">实现与验证<\/div>\n    <div class=\"ln\">读码 / 改码 / 调试 / 评测 / 部署 / 交付<\/div>\n    <p>能看出 AI 写得对不对、能证明系统准不准、能让别人接手。<b>这是你 12 周要补的。<\/b><\/p>\n  <\/div>\n<\/div>\n\n<div class=\"note\" style=\"margin-top:14px\">\n<b>三层的关系：<\/b>上层决定\"做不做\"，中层决定\"怎么做\"，下层决定\"能不能做成\"。<br/>\n只有上层 = 咨询顾问；只有下层 = 外包程序员；<b>三层都有 = FDE。<\/b>\n<\/div>\n"}, {"id": "where", "title": "用在哪：场景清单，以及你的切入点", "body": "\n<h4>通用场景（跨行业都在招）<\/h4>\n<table>\n  <tr><th>场景<\/th><th>典型任务<\/th><\/tr>\n  <tr><td>企业知识库 / 文档问答<\/td><td>把内部制度、合同、手册变成能问的<\/td><\/tr>\n  <tr><td>文档处理与合规审查<\/td><td>合同比对、条款抽取、发票核对<\/td><\/tr>\n  <tr><td>工单 / 客服 Agent<\/td><td>分派、回复、升级、人工兜底<\/td><\/tr>\n  <tr><td>数据分析助手<\/td><td>自然语言查库、出报表、异常解释<\/td><\/tr>\n  <tr><td>内容生产流水线<\/td><td>文案、字幕、素材检索、审核<\/td><\/tr>\n  <tr><td>质检 / 巡检<\/td><td>图像识别 + 人工复核 + 证据链<\/td><\/tr>\n  <tr><td>代码迁移 / 现代化<\/td><td>老系统改造、前端迁移、测试补全<\/td><\/tr>\n  <tr><td>流程自动化<\/td><td>订单、审批、对账、报表<\/td><\/tr>\n<\/table>\n\n<h4>垂直行业（岗位按行业拆）<\/h4>\n<p><span class=\"taglist\">金融风控<\/span><span class=\"taglist\">医疗<\/span><span class=\"taglist\">制造质检<\/span><span class=\"taglist\">政企审批<\/span><span class=\"taglist\">零售电商<\/span><span class=\"taglist\">能源电力<\/span><span class=\"taglist\">法律服务<\/span><span class=\"taglist\">教育<\/span><span class=\"taglist\">运营商<\/span><span class=\"taglist\">汽车<\/span><span class=\"taglist\">影视内容<\/span><\/p>\n<p class=\"muted small\">阿里云的 FDE 岗就是按行业开的：政企行业、汽车行业、通用 MaaS。字节的是按系统开：财务/HR 系统方向、算法方向。<\/p>\n\n<div class=\"callout\">\n  <b>你的切入点：影视 / 内容。<\/b><br/>\n  因为「懂 Avid/Resolve/Dailies 的工程师」几乎不存在，而「懂 AI 的剪辑师」更不存在。<br/>\n  这个交叉点上，你的 12 年经验是溢价，不是包袱。\n<\/div>\n\n<h4>但跨行业的正确姿势<\/h4>\n<p>不是\"学 10 个行业\"，是掌握<b>一套拆解任何行业的方法<\/b>。拿到任何流程，只问四问：<\/p>\n<table>\n  <tr><th>#<\/th><th>问<\/th><th>影视<\/th><th>电商<\/th><th>制造<\/th><\/tr>\n  <tr><td>1<\/td><td>现在这件事谁在做？<\/td><td>剪辑助理<\/td><td>运营<\/td><td>质检员<\/td><\/tr>\n  <tr><td>2<\/td><td>输入是什么、输出是什么？<\/td><td>素材 → 时间线<\/td><td>商品图 → 详情页<\/td><td>零件 → 合格/不合格<\/td><\/tr>\n  <tr><td>3<\/td><td>哪步是确定性的、哪步靠判断？<\/td><td>转码确定，选条靠判断<\/td><td>排版确定，卖点靠判断<\/td><td>测量确定，瑕疵判定靠判断<\/td><\/tr>\n  <tr><td>4<\/td><td>判断那步能不能变成可评测的标准？<\/td><td>CPS、术语表<\/td><td>转化率、退货率<\/td><td>缺陷类型、容忍度<\/td><\/tr>\n<\/table>\n<p class=\"muted small\">这四问，换到任何行业都一样。你在 TDM 流程改造里已经用过一次，只是当时没意识到它是通用的。<\/p>\n"}, {"id": "future", "title": "未来三年：会往哪走，以及风险", "body": "\n<p class=\"muted small\">以下是推断，不是事实。判断依据是 2026 年的 JD 和能力标准在怎么变。<\/p>\n\n<h4>五个大概率的变化<\/h4>\n<table>\n  <tr><th>变化<\/th><th>什么意思<\/th><th>对你的行动<\/th><\/tr>\n  <tr><td><b>1. FDE 会分层<\/b><\/td><td>通用\"什么都干\"的岗位减少，分成 AI builder / 数据基础设施 / 行业工作流 / 迁移<\/td><td>尽早占一个垂直（影视或电商）<\/td><\/tr>\n  <tr><td><b>2. 可复用资产成核心产出<\/b><\/td><td>connector、MCP server、skill、eval suite、模板，会像当年的 SDK 一样重要<\/td><td>每次交付都沉淀成一个可复用件<\/td><\/tr>\n  <tr><td><b>3. Agent 可靠性吞并一部分 MLOps<\/b><\/td><td>状态、重试、审批、回放、审计，进入统一交付栈<\/td><td>学\"失败处理\"比学\"新框架\"值钱<\/td><\/tr>\n  <tr><td><b>4. 面试更看现场证据<\/b><\/td><td>\"怎么发现、怎么评测、怎么灰度、怎么恢复、怎么交接\"占比更大<\/td><td>demo 要覆盖这五问<\/td><\/tr>\n  <tr><td><b>5. 最强 FDE 不会被替代<\/b><\/td><td>决定做什么、赢得信任、处理组织冲突、承担结果，仍需人<\/td><td>你的 12 年判断力是护城河<\/td><\/tr>\n<\/table>\n\n<h4>最反常识的一句<\/h4>\n<div class=\"callout\">\n  <b>模型知识的边际价值在下降，部署判断的边际价值在上升。<\/b><br/>\n  会调用更强模型的人越来越多；能判断该不该用、怎么限制权限、怎样构造黄金集、故障后如何恢复、如何让业务团队真正采用的人，仍然稀缺。\n<\/div>\n\n<h4>必须知道的反向风险<\/h4>\n<div class=\"note warn\">\nFDE 是<b>成本中心<\/b>，不是收入中心。如果企业 AI 采购从\"试验\"转回\"观望\"，这个岗位会先收缩。<br/>\n所以更稳的路径是：<b>先能接单交付，再谈进大厂。<\/b>接单赚的钱，能让你求职时不必将就。\n<\/div>\n"}, {"id": "learn", "title": "从底层怎么学：一张知识地图", "body": "\n<p>很多人学 FDE 失败，不是因为不努力，是因为<b>顺序错了<\/b>——先学框架、先学 Agent、先背名词。<\/p>\n<p>正确的顺序是下面六层。<b>每一层都给\"学到什么程度够用\"，不要追求 100%。<\/b><\/p>\n\n<table>\n  <tr><th>层<\/th><th>学什么<\/th><th>够用的标准<\/th><th>对应 App<\/th><\/tr>\n  <tr><td><b>L0 计算机常识<\/b><\/td><td>程序是什么、文件/路径、终端、报错怎么读<\/td><td>能自己跑起一个 .py 文件，看懂报错<\/td><td>W1 D1–D3<\/td><\/tr>\n  <tr><td><b>L1 编程<\/b><\/td><td>变量、条件、循环、函数、列表、字典、文件读写<\/td><td>能指挥 AI 写出 60 行小工具，并逐行讲清它在干什么、哪里可能错（正式岗位要求生产级代码；你的解法是 Vibe coding 当手 + 技术判断力验收 + 用交付物证明，缺的工程证据要一块一块补）<\/td><td>W1–W2<\/td><\/tr>\n  <tr><td><b>L2 数据<\/b><\/td><td>JSON/CSV、清洗、去重、排序、SQL 基础<\/td><td>能处理一份脏数据并出报告<\/td><td>W2–W4<\/td><\/tr>\n  <tr><td><b>L3 工程<\/b><\/td><td>异常、测试、调试、重构、Git、模块化<\/td><td>改一处不弄坏别处，有测试兜底<\/td><td>W3<\/td><\/tr>\n  <tr><td><b>L4 系统<\/b><\/td><td>API、HTTP、部署、Docker、日志、指标、评测<\/td><td>能上线，能证明它准，能看见它坏<\/td><td>W5–W8<\/td><\/tr>\n  <tr><td><b>L5 AI<\/b><\/td><td>模型 API、提示词、结构化输出、RAG、成本、失败兜底<\/td><td>能做出稳定可用、算得清成本的 AI 功能<\/td><td>W7<\/td><\/tr>\n  <tr><td><b>L6 交付<\/b><\/td><td>客户发现、SOW、文档、演示、交接、培训<\/td><td>别人能照你的文档接手<\/td><td>W9<\/td><\/tr>\n  <tr><td><b>L7 行业<\/b><\/td><td>一个垂直行业的真实流程<\/td><td>能说清这个行业\"钱在哪、痛在哪\"<\/td><td>W10–W12<\/td><\/tr>\n<\/table>\n\n<div class=\"callout\">\n  <b>为什么不能跳层：<\/b>L5 的 AI 能力建立在 L1–L4 上。跳过 L1 直接学 Agent，你会变成\"能指挥 AI，但看不出它哪里错\"的人。<br/>\n  <b>那不是 FDE，那是 AI 的重度用户。<\/b>\n<\/div>\n\n<h4>每一层只学到\"够用\"就往下走<\/h4>\n<p>50–80% 掌握就够，不要为一个知识点去学一整套体系。<b>但 L5 的\"评测\"和 L4 的\"能看见它坏\"，必须学透<\/b>——那是 FDE 的分水岭。<\/p>\n"}, {"id": "myth", "title": "五个常见误解", "body": "\n<div class=\"myth\">\n  <div class=\"mline\"><b>误解 1：FDE 是\"懂 AI 的程序员\"<\/b><br/>\n  真相：FDE 是\"能交付的工程师\"。模型只是被交付的东西之一。很多 FDE 项目里，最难的不是模型，是客户的数据和权限。<\/div>\n\n  <div class=\"mline\"><b>误解 2：要先成为顶级工程师才能做<\/b><br/>\n  真相：字节的 JD 写的是\"3 年经验<b>或同等实践经验<\/b>\"。他们要的是\"能扛事、能落地\"，不是\"算法竞赛冠军\"。<\/div>\n\n  <div class=\"mline\"><b>误解 3：FDE 就是驻场外包<\/b><br/>\n  真相：外包按别人的清单干；FDE 自己定义清单，并且要把经验沉淀成产品能力。区别在\"有没有判断权\"。<\/div>\n\n  <div class=\"mline\"><b>误解 4：会用 AI 写代码就够了<\/b><br/>\n  真相：会用 AI 是入场券（字节明写要求 Vibe coding），但<b>能看出 AI 写得对不对<\/b>才是门槛。前者是杠杆，后者是能力。<\/div>\n\n  <div class=\"mline\"><b>误解 5：FDE 只属于 AI 公司<\/b><br/>\n  真相：云厂商、行业软件、咨询公司、大企业 IT 部门都在设这个岗。国内阿里云叫\"交付专家\"，干的是一样的事。<\/div>\n<\/div>\n\n<div class=\"callout\" style=\"margin-top:16px\">\n  <b>如果只能记住一句：<\/b><br/>\n  FDE 不卖模型，不卖方案，<b>卖的是\"这件事在我手里能跑起来，而且我能证明它有用\"。<\/b>\n<\/div>\n"}]};
+
+/* ---------------- 状态 ---------------- */
+const KEY = "fde_app_v1";
+let S = load();
+function load(){
+  try{ const r = localStorage.getItem(KEY); if(r) return JSON.parse(r); }catch(e){}
+  return { done:{}, quiz:{}, openWeeks:{}, started: todayStr(), lastOpened: null };
+}
+/* 进度存不住的根因：file:// 打开时，Safari 不可靠地持久化 localStorage，
+   Chrome 则按文件路径给每个副本各存一份——换个副本就等于从零开始。
+   用本地服务（http://127.0.0.1:8000）打开，来源固定，进度才能跨版本留住。
+   KEY 保持 fde_app_v1 不变，同一个来源打开时旧进度能直接迁移。 */
+let STORAGE_OK = true;
+const IS_FILE = (typeof location !== "undefined" && location.protocol === "file:");
+(function storageHealthCheck(){
+  try{
+    localStorage.setItem("__fde_storage_test__", "1");
+    if(localStorage.getItem("__fde_storage_test__") !== "1") throw new Error("readback mismatch");
+    localStorage.removeItem("__fde_storage_test__");
+  }catch(e){ STORAGE_OK = false; }
+})();
+function save(){
+  S.lastOpened = new Date().toISOString();
+  try{ localStorage.setItem(KEY, JSON.stringify(S)); }catch(e){ STORAGE_OK = false; }
+}
+function todayStr(){ const d=new Date(); return d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate(); }
+function toast(m){ const t=document.getElementById("toast"); t.textContent=m; t.classList.add("on"); setTimeout(()=>t.classList.remove("on"),1600); }
+
+/* ---------------- 计算 ---------------- */
+function allDays(){
+  const out = [];
+  DATA.weeks.forEach(w=>{
+    (w.days||[]).forEach(d=>out.push({week:w.n, day:d.d, title:d.title, data:d}));
+  });
+  return out;
+}
+function totalDays(){ return allDays().length; }
+function doneCount(){ return Object.keys(S.done).filter(k=>S.done[k]).length; }
+function pct(){ const t=totalDays(); return t? Math.round(doneCount()/t*100):0; }
+function currentDay(){
+  return allDays().find(d=>!S.done[dayKey(d)]) || null;
+}
+function dayKey(d){ return "w"+d.week+"d"+d.day; }
+function weekSessionCount(w){
+  return (w.days && w.days.length) ? w.days.length : 7;
+}
+function weekDayKeys(w){
+  if(w.days && w.days.length) return w.days.map(d=>"w"+w.n+"d"+d.d);
+  return [1,2,3,4,5,6,7].map(d=>"w"+w.n+"d"+d);
+}
+function weekDoneCount(w){
+  return weekDayKeys(w).filter(k=>S.done[k]).length;
+}
+function weekProgress(w){
+  const n = weekSessionCount(w);
+  return n ? Math.round(weekDoneCount(w)/n*100) : 0;
+}
+
+
+/* ---------------- 日程（真实日期） ---------------- */
+const DAY_NAMES = ["第1天","第2天","第3天","第4天","第5天","第6天","第7天"];
+
+function pad2(n){ return String(n).padStart(2,"0"); }
+function fmtDate(d){ return d.getFullYear()+"-"+pad2(d.getMonth()+1)+"-"+pad2(d.getDate()); }
+function parseDate(str){
+  const p = String(str).split("-").map(Number);
+  return new Date(p[0], p[1]-1, p[2]);
+}
+function defaultStart(){
+  const d = new Date(); d.setDate(d.getDate()+1); return fmtDate(d);
+}
+function startDateStr(){
+  if(!S.start){ S.start = defaultStart(); save(); }
+  return S.start;
+}
+function setStart(v){
+  S.start = v || defaultStart(); save(); renderPlan(); renderHome();
+  toast("开始日期已设为 "+S.start);
+}
+function allSessions(){
+  const out = []; let idx = 0;
+  DATA.weeks.forEach(w=>{
+    const n = weekSessionCount(w);
+    const tasks = DATA.weekDetail[String(w.n)] || [];
+    for(let i=0; i<n; i++){
+      const day = (w.days && w.days.length) ? w.days[i] : null;
+      let title, dayNo;
+      if(day){
+        title = day.title;
+        dayNo = day.d;
+      } else {
+        const raw = tasks[i] || ("第 "+(i+1)+" 天任务");
+        title = raw.replace(/^D\d+\s*/, "");
+        dayNo = i+1;
+      }
+      out.push({ week:w.n, slot:i+1, day:dayNo, idx: idx++, key:"w"+w.n+"d"+dayNo, title:title, hasLesson: !!day });
+    }
+  });
+  return out;
+}
+function sessionDate(s){
+  const d = parseDate(startDateStr());
+  d.setDate(d.getDate() + s.idx);
+  return d;
+}
+function todayStr2(){ return fmtDate(new Date()); }
+function todaySession(){
+  const t = todayStr2();
+  return allSessions().find(s=>fmtDate(sessionDate(s)) === t) || null;
+}
+function overdueList(){
+  const t = todayStr2();
+  return allSessions().filter(s=>fmtDate(sessionDate(s)) < t && !S.done[s.key]);
+}
+function nextSession(){
+  const t = todaySession();
+  if(t && !S.done[t.key]) return t;
+  const od = overdueList();
+  if(od.length) return od[0];
+  return allSessions().find(s=>!S.done[s.key]) || null;
+}
+
+function renderPlan(){
+  const el = document.getElementById("plan");
+  if(!el) return;
+  const list = allSessions();
+  const today = todayStr2();
+  const ts = todaySession();
+  const od = overdueList();
+  const doneAll = list.filter(s=>S.done[s.key]).length;
+  const start = startDateStr();
+  const endD = sessionDate(list[list.length-1]);
+
+  // 今天的提示
+  let todayHtml = "";
+  if(ts){
+    const doneT = !!S.done[ts.key];
+    todayHtml = `<div class="todaybox">
+      <div class="td">今天 · ${today} · 第 ${ts.week} 周 第 ${ts.day} 天</div>
+      <h3>${doneT ? "✓ 已完成：" : ""}${ts.title}</h3>
+      <p class="small muted" style="margin-bottom:12px">${doneT ? "今天这一节已经打勾。可以提前看下一节，也可以休息。" : "现在打开它，照着做。不要往下翻。"}</p>
+      <button class="btn primary" onclick="openSession(${ts.week},${ts.slot})">打开今天这节课 →</button>
+      ${od.length?`<span class="chip r" style="margin-left:10px">还有 ${od.length} 节欠账</span>`:""}
+    </div>`;
+  } else {
+    // 今天没有对应节次（还没开始，或超出范围）
+    const nx = nextSession();
+    todayHtml = `<div class="todaybox">
+      <div class="td">今天 · ${today}</div>
+      <h3>今天没有安排（课程从 ${start} 开始）</h3>
+      <p class="small muted" style="margin-bottom:12px">你可以把开始日期改成今天，从现在开始。</p>
+      <button class="btn" onclick="setStart('${today}')">就从今天开始</button>
+      ${nx?`<button class="btn primary" style="margin-left:8px" onclick="openSession(${nx.week},${nx.slot})">先看第一节 →</button>`:""}
+    </div>`;
+  }
+
+  // 日历
+  let rows = "";
+  DATA.weeks.forEach(w=>{
+    const n = weekSessionCount(w);
+    const ss = list.filter(s=>s.week===w.n);
+    const range = ss.length ? fmtDate(sessionDate(ss[0])).slice(5) + " – " + fmtDate(sessionDate(ss[ss.length-1])).slice(5) : "";
+    let cells = "";
+    for(let d=1; d<=7; d++){
+      const s = ss.find(x=>x.slot===d);
+      if(!s){ cells += `<div class="cell empty"></div>`; continue; }
+      const ds = fmtDate(sessionDate(s));
+      const done = !!S.done[s.key];
+      const isT = ds === today;
+      const missed = ds < today && !done;
+      const cls = done ? "done" : (isT ? "today" : (missed ? "missed" : ""));
+      cells += `<div class="cell ${cls}" onclick="openSession(${w.n},${s.slot})" title="${ds} ${s.title}">
+        <div class="dt">${ds.slice(5)}</div>
+        <div class="tt">${s.title}</div>
+        <div class="dn">D${s.slot}${done?" ✓":""}</div>
+      </div>`;
+    }
+    rows += `<div class="wlab">W${w.n}<small>${range}</small></div>${cells}`;
+  });
+
+  el.innerHTML = `<h2>日程表 · 照着日期做</h2>
+    <p class="small muted" style="margin-bottom:12px">一共 ${list.length} 节，每天一节。今天该做哪一节，上面写着；点任意一格可以直接跳过去。</p>
+
+    <div class="planbar">
+      <label>开始日期</label>
+      <input type="date" value="${start}" onchange="setStart(this.value)" />
+      <span class="small muted">结束：${fmtDate(endD)}</span>
+      <span class="chip a">已完成 ${doneAll}/${list.length}</span>
+      ${od.length?`<span class="chip r">欠账 ${od.length}</span>`:`<span class="chip g">没有欠账</span>`}
+    </div>
+
+    ${todayHtml}
+
+    <div class="card">
+      <h3>12 周日历</h3>
+      <div style="overflow-x:auto;margin-top:12px">
+        <div class="cal">
+          <div class="hcell"></div>
+          ${DAY_NAMES.map(h=>`<div class="hcell">${h}</div>`).join("")}
+          ${rows}
+        </div>
+      </div>
+      <p class="small dim" style="margin-top:10px">黄框＝今天 · 绿＝已完成 · 橙＝逾期未做 · 点格子跳转到当天</p>
+    </div>
+
+    <div id="sessionDetail" style="display:none;margin-bottom:14px"></div>
+
+    <div class="card">
+      <h3>每天怎么过（固定动作，别想太多）</h3>
+      <div class="sop">
+        <div class="soprow"><span class="tm">开场 10min</span><span class="ct">打开这个 App 的<b>首页</b>，看今天该做哪一节。不要先想"学什么"，直接点开。</span></div>
+        <div class="soprow"><span class="tm">动手 90min</span><span class="ct"><b>只做这一节</b>。照着敲，不许复制粘贴。卡 30 分钟就跳过，记进"欠账清单"。</span></div>
+        <div class="soprow"><span class="tm">收尾 10min</span><span class="ct">在 App 里<b>打勾</b>；写 3 行日志（今天写了什么 / 卡在哪 / 想通了什么）到 <code>~/fde-code/notes/</code>。</span></div>
+        <div class="soprow"><span class="tm">每周日 1h</span><span class="ct"><b>不用看答案复述</b>本周最核心那段逻辑（限时 60 分钟），然后补这周的欠账。</span></div>
+        <div class="soprow"><span class="tm">每 4 周</span><span class="ct">停下来检查里程碑。没达标就<b>砍任务</b>，不要延长周期。</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>四个里程碑（到点必须能拿出来）</h3>
+      <div class="ms">
+        <div class="msitem"><div class="mk">第 4 周结束</div><div class="mv">subtitle-qc v0.1 能跑</div><div class="md">解析 SRT、5 条规则、出报告、有 README。发给一个人用过。</div></div>
+        <div class="msitem"><div class="mk">第 6 周结束</div><div class="mv">有评测数字</div><div class="md">20 条黄金集，能说出检出率/误报/耗时，有 badcase 归因。</div></div>
+        <div class="msitem"><div class="mk">第 9 周结束</div><div class="mv">能上线 + 有 demo</div><div class="md">一个能访问的地址、runbook、3 分钟演示视频。</div></div>
+        <div class="msitem"><div class="mk">第 12 周结束</div><div class="mv">能面试</div><div class="md">3 个案例、简历、8 个 STAR、投出 3 个岗位。</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>落后了怎么办（这条最重要）</h3>
+      <div class="note">
+        <b>不顺延，只记欠账。</b>今天没做完 → 明天照常做明天那节，欠的那节进"欠账清单"，周六补。<br/>
+        <b>为什么：</b>顺延会让你永远追不上，最后放弃。记欠账让你保持节奏，欠账可以一次性清。<br/>
+        <b>欠账超过 5 节：</b>不是时间不够，是每节太难。把每节拆成两次做（各 50 分钟），或者降到"只读不做"。
+      </div>
+    </div>`;
+}
+function openSession(w,slot){
+  const s = allSessions().find(x=>x.week===w && x.slot===slot);
+  if(!s) return;
+  if(s.hasLesson){ openDay(w, s.day); return; }
+  const box = document.getElementById("sessionDetail");
+  const done = !!S.done[s.key];
+  box.style.display = "block";
+  box.innerHTML = `<div class="card" style="border-color:var(--amber)">
+    <div class="small" style="color:var(--amber);letter-spacing:1px">第 ${w} 周 · 第 ${slot} 天 · ${fmtDate(sessionDate(s))}</div>
+    <h3 style="margin-top:6px">${s.title}</h3>
+    <p class="small muted" style="margin:10px 0">这一节是任务清单形式，完整说明在「12 周课程」里对应那一周。</p>
+    <button class="btn ${done?"":"primary"}" onclick="markSession(${w},${slot})">${done?"✓ 已完成（点击取消）":"标记为已完成"}</button>
+    <button class="btn ghost sm" style="margin-left:8px" onclick="show('course');setTimeout(()=>jumpWeek(${w}),80)">看这一周的完整清单 →</button>
+  </div>`;
+  box.scrollIntoView({behavior:"smooth",block:"center"});
+}
+function markSession(w,slot){
+  const ss = allSessions().find(x=>x.week===w && x.slot===slot);
+  if(!ss) return;
+  const k = ss.key;
+  S.done[k] = !S.done[k];
+  save(); renderPlan(); renderHome(); renderProgress(); renderCourse();
+  toast(S.done[k]?"完成":"已取消");
+}
+
+/* ---------------- 渲染：首页 ---------------- */
+function renderHome(){
+  const cur = nextSession();
+  const ts = todaySession();
+  const od = overdueList();
+  const todayS = todayStr2();
+  const t = totalDays();
+  const p = pct();
+  const el = document.getElementById("home");
+  const hasProgress = Object.keys(S.done).some(k=>S.done[k]) || Object.keys(S.quiz).some(k=>S.quiz[k]);
+  const lastOpenedText = S.lastOpened ? new Date(S.lastOpened).toLocaleString("zh-CN", {hour12:false}) : "还没有记录";
+  const storageWarn = (!STORAGE_OK || IS_FILE) ? `<div class="card" style="border-color:var(--red);margin-bottom:16px">
+      <h3 style="color:var(--red)">⚠ 当前打开方式存不住进度（file://）</h3>
+      <p class="small muted" style="margin:8px 0 12px">你现在是直接双击 HTML 打开的：Safari 在这种打开方式下存不住进度，Chrome 则按文件路径给每个副本各存一份，换个副本就从零开始。这就是你以前每次打开都重新开始的原因。<br/>正确做法：双击文件夹里的「打开学习台.command」，用本地服务（http://127.0.0.1:8000）打开；或者现在就点下面「导出进度文件」，每次学完导一份备份。</p>
+      <button class="btn primary" onclick="exportProgress()">导出进度文件</button>
+      <button class="btn" style="margin-left:8px" onclick="importProgress()">导入进度文件</button>
+    </div>` : "";
+  const importHint = (!hasProgress && !S.lastOpened) ? `<div class="card" style="border-color:var(--cyan);margin-bottom:16px">
+      <h3>没找到学习进度？如果你以前学过，点这里导入进度文件</h3>
+      <p class="small muted" style="margin:8px 0 12px">以前导出的进度是一个 .json 文件，导入后之前打过的勾、答过的题都会回来。没导过也没关系，从今天开始学，学完记得导出备份。</p>
+      <button class="btn" onclick="importProgress()">导入进度文件</button>
+    </div>` : "";
+
+  let curHtml = "";
+  if(cur){
+    const isToday = ts && cur.key === ts.key;
+    const lesson = (DATA.weeks.find(w=>w.n===cur.week).days||[]).find(d=>d.d===cur.day);
+    const desc = lesson ? lesson.learn.slice(0,90)+"…" : "这一节是任务清单形式，点开看今天要做什么。";
+    curHtml = `
+      <div class="card" style="border-color:var(--amber)">
+        <div class="small" style="color:var(--amber);letter-spacing:1px;margin-bottom:6px">
+          ${isToday ? "今天（"+todayS+"）从这里开始" : "接下来要做的（今天没有安排或已完成，这是最近一节）"}
+        </div>
+        <h2 style="margin-bottom:6px">第 ${cur.week} 周 · 第 ${cur.day} 天：${cur.title}</h2>
+        <p class="muted small" style="margin-bottom:14px">${desc}</p>
+        <button class="btn primary" onclick="openSession(${cur.week},${cur.slot})">打开这一节 →</button>
+        ${od.length?`<span class="chip r" style="margin-left:10px">欠账 ${od.length} 节</span>`:""}
+        <button class="btn ghost sm" style="margin-left:8px" onclick="show('plan')">看日程表</button>
+      </div>`;
+  } else {
+    curHtml = `<div class="card" style="border-color:var(--green)">
+      <h2 style="color:var(--green)">前 4 周已经全部完成 ✓</h2>
+      <p class="muted small">接下来从第 5 周开始：评测。这是整条路线里最值钱的一周。</p>
+      <button class="btn primary" style="margin-top:12px" onclick="show('course')">看第 5 周任务 →</button>
+    </div>`;
+  }
+
+  el.innerHTML = `
+    ${storageWarn}
+    ${importHint}
+    <div class="grid g4" style="margin-bottom:16px">
+      <div class="stat"><b>${p}%</b><span>课程完成度</span><div class="sub">${doneCount()} / ${t} 天</div></div>
+      <div class="stat"><b>${cur?"W"+cur.week:"—"}</b><span>下一节</span><div class="sub">${cur?"第 "+cur.day+" 天":"全部完成"}</div></div>
+      <div class="stat"><b>${Object.keys(S.quiz).filter(k=>S.quiz[k]).length}/${DATA.quiz.length}</b><span>测验答对</span><div class="sub">概念检查</div></div>
+      <div class="stat"><b style="font-size:15px">${todayS.slice(5)}</b><span>今天</span><div class="sub">${ts?"第 "+ts.week+" 周 第 "+ts.day+" 天":"无安排"}</div></div>
+    </div>
+
+    ${curHtml}
+
+    <div class="card" style="border-color:var(--cyan)">
+      <h3>进度 · 上次打开 ${lastOpenedText}</h3>
+      <p class="small muted" style="margin:8px 0 12px">已完成 ${doneCount()} / ${t} 天 · 完成度 ${p}%${(!STORAGE_OK || IS_FILE) ? " · ⚠ 当前打开方式存不住进度，请用「打开学习台.command」启动" : " · 当前打开方式可以存进度"}</p>
+      <button class="btn primary" onclick="exportProgress()">导出进度文件</button>
+      <button class="btn" style="margin-left:8px" onclick="importProgress()">导入进度文件</button>
+      <span class="small dim" style="margin-left:10px">导出的是 .json 文件，换电脑、换版本都能导回来</span>
+    </div>
+
+    <div class="card">
+      <h3>这门课怎么用（三句话）</h3>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="stat"><b style="font-size:16px;color:var(--cyan)">① 每天只做一天</b><span>打开当天，照着敲，不要往下翻</span></div>
+        <div class="stat"><b style="font-size:16px;color:var(--cyan)">② AI 当手，你当验收</b><span>让 AI 写代码，你负责看懂、验收、找错</span></div>
+        <div class="stat"><b style="font-size:16px;color:var(--cyan)">③ 卡 30 分钟就跳过</b><span>记下来，周末集中解决</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>12 周路线（点开看每周）</h3>
+      <div class="grid g2" style="margin-top:10px">
+        ${DATA.weeks.map(w=>`
+          <div class="week ${weekProgress(w)===100?"done":""} ${cur&&cur.week===w.n?"cur":""}" onclick="show('course');setTimeout(()=>jumpWeek(${w.n}),60)">
+            <div class="wh"><span class="wn">W${w.n}</span><span class="wt">${w.title}</span>
+              <span class="wmeta">${weekProgress(w)}%</span></div>
+            <div class="wg">${w.goal}</div>
+            <div class="bar ${weekProgress(w)===100?'g':''}"><i style="width:${weekProgress(w)}%"></i></div>
+          </div>`).join("")}
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>现实提醒</h3>
+      <p class="small muted">
+        12 周学完，<b style="color:var(--ink)">不会自动拿到 offer</b>。你会拿到的是：有一个能演示的作品、能讲清取舍、能扛住技术追问。<br/>
+        真实路径：学完 → 有作品 → 有人愿意见你 → 面 3–5 家 → 拿 1 个 offer。offer 在第 4–6 个月。
+      </p>
+    </div>
+  `;
+}
+function daysSince(){
+  const s = new Date(S.started);
+  const d = Math.floor((Date.now()-s.getTime())/86400000);
+  return d<0?0:d;
+}
+
+/* ---------------- 渲染：课程 ---------------- */
+function renderCourse(){
+  const el = document.getElementById("course");
+  el.innerHTML = `<h2>12 周课程</h2>
+    <p class="small muted" style="margin-bottom:14px">W0–W4、W5、W8 拆到每天（可直接照着做）；其余周给每周任务清单。点周展开，点天看内容。</p>
+    <div id="weekList"></div>`;
+
+  const box = document.getElementById("weekList");
+  DATA.weeks.forEach(w=>{
+    const p = weekProgress(w);
+    const expanded = S.openWeeks[w.n] !== false;
+    const wrap = document.createElement("div");
+    wrap.id = "week-"+w.n;
+    wrap.innerHTML = `
+      <div class="week ${p===100?"done":""}" onclick="toggleWeek(${w.n})">
+        <div class="wh"><span class="wn">W${w.n}</span><span class="wt">${w.title}</span>
+          <span class="wmeta">${w.days&&w.days.length? (w.days.filter(d=>S.done["w"+w.n+"d"+d.d]).length+"/"+w.days.length+" 天") : "任务清单"} · ${p}%</span></div>
+        <div class="wg">${w.goal}</div>
+        <div class="bar ${p===100?'g':''}"><i style="width:${p}%"></i></div>
+        <div class="small dim" style="margin-top:8px">交付：${w.deliverable}</div>
+      </div>
+      <div id="days-${w.n}" style="display:${expanded?"block":"none"};padding-left:8px;margin-bottom:14px"></div>`;
+    box.appendChild(wrap);
+
+    const dbox = wrap.querySelector("#days-"+w.n);
+    if(w.days && w.days.length){
+      w.days.forEach(d=>dbox.appendChild(dayEl(w,d)));
+    } else {
+      const tasks = DATA.weekDetail[String(w.n)] || [];
+      const div = document.createElement("div");
+      div.className = "card";
+      div.innerHTML = `<h4>本周任务清单（每天一条）</h4>
+        <ul class="tasks">${tasks.map(t=>"<li>"+t+"</li>").join("")}</ul>
+        <p class="small muted" style="margin-top:10px">这一周没有逐日详解，按上面的清单做。做完在「我的进度」里手动打勾。</p>
+        <button class="btn sm" style="margin-top:10px" onclick="toggleWeekDone(${w.n})">标记本周完成</button>`;
+      dbox.appendChild(div);
+    }
+  });
+}
+function toggleWeek(n){
+  S.openWeeks[n] = (S.openWeeks[n] === false);
+  save();
+  const el = document.getElementById("days-"+n);
+  if(el) el.style.display = S.openWeeks[n]===false ? "none":"block";
+}
+function jumpWeek(n){
+  const el = document.getElementById("week-"+n);
+  if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function toggleWeekDone(n){
+  const w = DATA.weeks.find(x=>x.n===n);
+  const keys = weekDayKeys(w);
+  const allDone = keys.every(k=>S.done[k]);
+  keys.forEach(k=>{ S.done[k] = !allDone; });
+  save(); renderCourse(); renderHome(); renderPlan();
+  toast(allDone?"已取消":"已标记完成");
+}
+
+function dayEl(w,d){
+  const k = "w"+w.n+"d"+d.d;
+  const done = !!S.done[k];
+  const el = document.createElement("div");
+  el.className = "day"+(done?" done":"");
+  el.id = "day-"+w.n+"-"+d.d;
+  el.innerHTML = `
+    <div class="dh" onclick="toggleDay(${w.n},${d.d})">
+      <span class="dn">D${d.d}</span>
+      <span class="dt">${d.title}</span>
+      <span class="dck">✓</span>
+    </div>
+    <div class="body">
+      <div class="learn">${d.learn}</div>
+      ${d.concepts&&d.concepts.length?`<div><h4>要懂的概念</h4><div class="concepts">${d.concepts.map(c=>`<div class="con"><b>${c[0]}</b>　${c[1]}</div>`).join("")}</div></div>`:""}
+      ${d.tasks&&d.tasks.length?`<div><h4>动手做（照着敲，别复制）</h4><ul class="tasks">${d.tasks.map(t=>"<li>"+t+"</li>").join("")}</ul></div>`:""}
+      ${d.code?`<div><h4>参考代码</h4><div class="codebox"><button class="cp" onclick="copyCode(this)">复制</button><pre>${esc(d.code)}</pre></div></div>`:""}
+      ${d.check&&d.check.length?`<div><h4>做完检查（能打勾才算过）</h4><ul class="check">${d.check.map(c=>"<li>"+c+"</li>").join("")}</ul></div>`:""}
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+        <button class="btn ${done?"":"primary"}" onclick="markDay(${w.n},${d.d})">${done?"✓ 已完成（点击取消）":"标记为已完成"}</button>
+        <button class="btn ghost sm" onclick="goNext(${w.n},${d.d})">下一天 →</button>
+      </div>
+    </div>`;
+  return el;
+}
+function esc(s){ return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function copyCode(btn){
+  const pre = btn.parentElement.querySelector("pre");
+  navigator.clipboard.writeText(pre.textContent).then(()=>{ btn.textContent="已复制"; setTimeout(()=>btn.textContent="复制",1200); });
+}
+function toggleDay(w,d){
+  const el = document.getElementById("day-"+w+"-"+d);
+  if(el) el.classList.toggle("open");
+}
+function openDay(w,d){
+  show("course");
+  setTimeout(()=>{
+    const el = document.getElementById("day-"+w+"-"+d);
+    if(el){ el.classList.add("open"); el.scrollIntoView({behavior:"smooth",block:"center"}); }
+  },80);
+}
+function markDay(w,d){
+  const k = "w"+w+"d"+d;
+  S.done[k] = !S.done[k];
+  save(); renderCourse(); renderHome();
+  toast(S.done[k]?"完成第 "+d+" 天":"已取消");
+}
+function goNext(w,d){
+  const list = allDays();
+  const i = list.findIndex(x=>x.week===w&&x.day===d);
+  const nx = list[i+1];
+  if(nx){ openDay(nx.week,nx.day); } else { toast("已经是最后一天"); }
+}
+
+/* ---------------- 知识库 ---------------- */
+function renderConcepts(filter){
+  const cc = document.getElementById("conceptCount");
+  if(cc) cc.textContent = DATA.concepts.length;
+  const box = document.getElementById("conceptList");
+  const kw = (filter||"").trim().toLowerCase();
+  const list = DATA.concepts.filter(c=>!kw || c[0].toLowerCase().includes(kw) || c[1].toLowerCase().includes(kw));
+  if(!list.length){ box.innerHTML = `<div class="empty">没找到。换个词试试。</div>`; return; }
+  box.innerHTML = list.map(c=>`<div class="concept"><b>${c[0]}</b><p>${c[1]}</p></div>`).join("");
+}
+
+/* ---------------- 测验 ---------------- */
+function renderQuiz(){
+  const el = document.getElementById("quiz");
+  const answered = Object.keys(S.quiz).filter(k=>S.quiz[k]).length;
+  el.innerHTML = `<h2>概念测验 · <span class="small muted">${answered}/${DATA.quiz.length} 答对</span></h2>
+    <p class="small muted" style="margin-bottom:14px">点一个选项，立刻知道对错和原因。答错的可以重答。</p>
+    <div id="quizList"></div>`;
+  const box = document.getElementById("quizList");
+  DATA.quiz.forEach((q,i)=>{
+    const div = document.createElement("div");
+    div.className = "q";
+    div.innerHTML = `<div class="qt">${i+1}. ${q.q}</div>
+      <div class="opts"></div>
+      <div class="why" id="why-${i}">${q.why}</div>`;
+    const opts = div.querySelector(".opts");
+    q.a.forEach((text,j)=>{
+      const b = document.createElement("button");
+      b.className = "opt";
+      b.textContent = String.fromCharCode(65+j)+". "+text;
+      b.onclick = ()=>{
+        const right = j===q.ok;
+        opts.querySelectorAll(".opt").forEach(x=>x.disabled=false);
+        b.classList.add(right?"right":"wrong");
+        if(!right){ opts.children[q.ok].classList.add("right"); }
+        document.getElementById("why-"+i).classList.add("show");
+        if(right){ S.quiz[i]=true; save(); }
+        renderQuizStats();
+      };
+      opts.appendChild(b);
+    });
+    box.appendChild(div);
+  });
+}
+function renderQuizStats(){
+  const answered = Object.keys(S.quiz).filter(k=>S.quiz[k]).length;
+  const h = document.querySelector("#quiz h2");
+  if(h) h.innerHTML = `概念测验 · <span class="small muted">${answered}/${DATA.quiz.length} 答对</span>`;
+}
+
+/* ---------------- 速查卡 ---------------- */
+const REF = [["想干什么", "怎么写"], ["打印", "print(\"内容\")"], ["变量", "name = \"值\""], ["字符串拼数字", "\"a\" + str(123)"], ["转数字", "int(\"123\")"], ["判断", "if x > 10: / elif / else:"], ["循环列表", "for x in items:"], ["循环次数", "for i in range(5):"], ["列表", "items = [1, 2, 3]"], ["加元素", "items.append(4)"], ["长度", "len(items)"], ["字典", "d = {\"k\": 1}"], ["安全取值", "d.get(\"k\", 默认值)"], ["排序", "sorted(items)"], ["按字段排序", "sorted(items, key=lambda x: x[\"stars\"])"], ["定义函数", "def f(a, b):"], ["返回", "return 结果"], ["读文件", "with open(p, \"r\", encoding=\"utf-8\") as f:"], ["读所有行", "f.readlines()"], ["写文件", "with open(p, \"w\", encoding=\"utf-8\") as f:"], ["去空白", "s.strip()"], ["切分", "s.split()"], ["替换", "s.replace(\"旧\", \"新\")"], ["包含", "\"词\" in s"], ["转 JSON", "json.loads(text) / json.load(f)"], ["转 JSON 字符串", "json.dumps(obj, ensure_ascii=False)"], ["跑测试", "python3 -m unittest -v"], ["看报错", "先看最后一行 + File/line"]];
+const ERRORS = [["SyntaxError", "语法错", "括号、引号、冒号是否成对"], ["IndentationError", "缩进错", "混用空格和 Tab"], ["NameError", "变量没定义", "拼写？定义在下面？"], ["TypeError", "类型不对", "字符串加数字？忘了 str/int"], ["KeyError", "字典没这个键", "用 .get() 代替 []"], ["IndexError", "列表越界", "列表空？索引从 0 开始"], ["FileNotFoundError", "找不到文件", "路径对不对？ls 看看"], ["ValueError", "值不对", "int(\"abc\") 会报这个"], ["AttributeError", "对象没这属性", "None.xxx 最常见"], ["ModuleNotFoundError", "模块没装", "pip install 模块名"]];
+
+function renderRef(){
+  const el = document.getElementById("ref");
+  el.innerHTML = `
+    <h2>速查卡</h2>
+    <div class="card">
+      <h3>Python 最常用写法</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:10px">
+        ${REF.map((r,i)=>`<tr>
+          <td style="padding:7px 10px;border-bottom:1px solid #1a2230;color:${i?"var(--muted)":"var(--dim)"};width:38%">${r[0]}</td>
+          <td style="padding:7px 10px;border-bottom:1px solid #1a2230;font-family:ui-monospace,monospace;font-size:12.5px;color:var(--cyan)">${esc(r[1])}</td>
+        </tr>`).join("")}
+      </table>
+    </div>
+    <div class="card">
+      <h3>最常见的 10 个报错</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:10px">
+        ${ERRORS.map(r=>`<tr>
+          <td style="padding:8px 10px;border-bottom:1px solid #1a2230;font-family:ui-monospace,monospace;font-size:12px;color:var(--red);width:34%">${r[0]}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #1a2230;color:var(--muted);width:22%">${r[1]}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #1a2230;color:var(--dim);font-size:12.5px">${r[2]}</td>
+        </tr>`).join("")}
+      </table>
+    </div>
+    <div class="card">
+      <h3>调试三步法</h3>
+      <div class="grid g3" style="margin-top:10px">
+        <div class="stat"><b style="font-size:15px;color:var(--cyan)">① 复现</b><span>让它每次都错。不能复现的 bug 修不了。</span></div>
+        <div class="stat"><b style="font-size:15px;color:var(--cyan)">② 缩小</b><span>注释掉一半代码，看还错不错。</span></div>
+        <div class="stat"><b style="font-size:15px;color:var(--cyan)">③ 验证</b><span>写个测试，证明修好了。</span></div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>问 AI 的正确姿势</h3>
+      <div class="grid g2" style="margin-top:10px">
+        <div class="stat"><b style="font-size:14px;color:var(--green)">✅ 可以问</b><span>这个报错是什么意思？该检查哪几行？<br/>lambda 在这里干什么？用大白话解释。<br/>帮我 review 这段，指出 3 个可能出错的地方。</span></div>
+        <div class="stat"><b style="font-size:14px;color:var(--red)">❌ 不要问</b><span>帮我写一个完整的 XXX。<br/>这段我看不懂，你重写一遍。<br/>直接给我能跑的版本。</span></div>
+      </div>
+      <p class="small muted" style="margin-top:12px">判断标准：问完之后，你能不能用大白话讲给一个不懂的人听？能 → 有效学习；不能 → 你只是在搬运。</p>
+    </div>`;
+}
+
+/* ---------------- 进度 ---------------- */
+function renderProgress(){
+  const el = document.getElementById("progress");
+  const p = pct();
+  const lastOpenedText = S.lastOpened ? new Date(S.lastOpened).toLocaleString("zh-CN", {hour12:false}) : "还没有记录";
+  el.innerHTML = `
+    <h2>我的进度</h2>
+    <div class="grid g4" style="margin-bottom:16px">
+      <div class="stat"><b>${p}%</b><span>完成度</span><div class="sub">${doneCount()}/${totalDays()} 天</div></div>
+      <div class="stat"><b>${daysSince()}</b><span>坚持天数</span><div class="sub">从 ${S.started}</div></div>
+      <div class="stat"><b>${Object.keys(S.quiz).filter(k=>S.quiz[k]).length}</b><span>测验答对</span><div class="sub">共 ${DATA.quiz.length} 题</div></div>
+      <div class="stat"><b>${DATA.weeks.filter(w=>weekProgress(w)===100).length}</b><span>完成的周</span><div class="sub">共 13 周</div></div>
+    </div>
+    <div class="card" style="border-color:var(--cyan)">
+      <h3>进度备份 · 上次打开 ${lastOpenedText}</h3>
+      <p class="small muted" style="margin:8px 0 12px">进度存在浏览器里（localStorage，key 仍是 fde_app_v1，同一个来源打开时旧进度能迁移）。用本地服务（http://127.0.0.1:8000）打开才能跨版本留住；换电脑、换浏览器前先导出。</p>
+      <button class="btn primary" onclick="exportProgress()">导出进度文件</button>
+      <button class="btn" style="margin-left:8px" onclick="importProgress()">导入进度文件</button>
+    </div>
+    <div class="card">
+      <h3>逐周进度</h3>
+      <div style="margin-top:12px">
+        ${DATA.weeks.map(w=>`
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px">
+              <span>W${w.n} ${w.title}</span><span class="mono" style="color:var(--amber)">${weekProgress(w)}%</span>
+            </div>
+            <div class="bar ${weekProgress(w)===100?'g':''}"><i style="width:${weekProgress(w)}%"></i></div>
+          </div>`).join("")}
+      </div>
+    </div>
+    <div class="card">
+      <h3>每天 3 行日志（自己写在笔记里）</h3>
+      <div class="codebox"><button class="cp" onclick="copyCode(this)">复制</button><pre>日期：
+今天写了什么：
+卡住的点：
+想通的一句话：</pre></div>
+      <p class="small muted" style="margin-top:10px">写在 ~/fde-code/notes/ 里。12 周后，这 80 多条日志就是你「学习能力」的证据。</p>
+    </div>`;
+}
+
+/* ---------------- 导入导出 ---------------- */
+function exportProgress(){
+  const blob = new Blob([JSON.stringify(S,null,2)],{type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "fde-progress-"+todayStr()+".json";
+  a.click(); URL.revokeObjectURL(a.href);
+  toast("已导出");
+}
+function importProgress(){
+  const inp = document.createElement("input"); inp.type="file"; inp.accept=".json";
+  inp.onchange = ()=>{
+    const f = inp.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = ()=>{
+      try{
+        const data = JSON.parse(r.result);
+        if(!data || typeof data.done !== "object") throw new Error("not progress file");
+        S = data;
+        if(!S.lastOpened) S.lastOpened = null;
+        save(); renderAll(); toast("已导入");
+      }catch(e){ toast("解析失败：不是进度文件"); }
+    };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+document.getElementById("export").onclick = exportProgress;
+document.getElementById("import").onclick = importProgress;
+document.getElementById("reset").onclick = ()=>{
+  if(confirm("清空所有进度？不可撤销。")){
+    S = { done:{}, quiz:{}, openWeeks:{}, started: todayStr(), lastOpened: null };
+    save(); renderAll(); toast("已重置");
+  }
+};
+
+
+/* ---------------- FDE 是什么 ---------------- */
+function renderIntro(){
+  const el = document.getElementById("intro");
+  const nav = DATA.intro.map(s=>`<button onclick="jumpIntro('${s.id}')">${s.title.split("：")[0].split("，")[0]}</button>`).join("");
+  el.innerHTML = `<h2>FDE 是什么</h2>
+    <p class="small muted" style="margin-bottom:14px">先看懂这一章，再去练。不知道逻辑就照着练，练到一半会崩。</p>
+    <div class="intronav">${nav}</div>
+    ${DATA.intro.map(s=>`<div class="introsec" id="intro-${s.id}"><h3>${s.title}</h3>${s.body}</div>`).join("")}`;
+}
+function jumpIntro(id){
+  const el = document.getElementById("intro-"+id);
+  if(el) el.scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+/* ---------------- 导航 ---------------- */
+function show(name){
+  const b = document.querySelector('.tab[data-t="'+name+'"]');
+  if(!b) return;
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll("section").forEach(s=>s.classList.toggle("on",s.id===name));
+  if(name==="home") renderHome();
+  if(name==="plan") renderPlan();
+  if(name==="intro") renderIntro();
+  if(name==="course") renderCourse();
+  if(name==="progress") renderProgress();
+  if(name==="quiz") renderQuiz();
+  if(name==="ref") renderRef();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.getElementById("nav").addEventListener("click",e=>{
+  const b = e.target.closest(".tab"); if(!b) return;
+  show(b.dataset.t);
+});
+document.getElementById("search").addEventListener("input",e=>renderConcepts(e.target.value));
+
+/* ---------------- 初始化 ---------------- */
+function renderAll(){
+  renderHome(); renderPlan(); renderIntro(); renderCourse(); renderConcepts(""); renderQuiz(); renderRef(); renderProgress();
+}
+renderAll();
+</script>
+</body>
+</html>
